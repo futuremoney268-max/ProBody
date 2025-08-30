@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProBody | Premium Gym Planner</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- App Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-light text-dark">
+
+<!-- Profile Card -->
+<div class="container mt-4">
+  <div class="profile-card card glass shadow-sm p-4 mx-auto">
+    <div class="d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center">
+        <div class="user-profile position-relative me-3">
+          <img src="../Logo.png" alt="User profile" class="rounded-circle" style="width: 60px; height: 60px;" onerror="this.src='https://via.placeholder.com/60';">
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary" id="gymDayCount" aria-label="Gym days">0</span>
+        </div>
+        <div class="user-info">
+          <h5 class="fw-bold mb-1" id="userName">John Doe</h5>
+          <small class="text-muted" id="todayDate">Aug 29, 2025</small>
+          <p class="text-muted mb-0" id="userStats">Weight: 70 kg, Age: 30</p>
+        </div>
+      </div>
+      <div>
+        <button class="btn btn-outline-primary btn-sm edit-profile-btn me-2" data-bs-toggle="modal" data-bs-target="#editProfileModal" aria-label="Edit Profile">
+          <i class="material-icons">edit</i>
+        </button>
+        <button class="btn btn-primary btn-sm view-recommendations-btn" data-bs-toggle="modal" data-bs-target="#recommendationsModal" aria-label="View Recommendations">
+          <i class="material-icons">lightbulb</i>
+        </button>
+      </div>
+    </div>
+    <div class="mt-3">
+      <p class="mb-1 fw-bold">Training Progress</p>
+      <div class="progress" role="progressbar" aria-label="Gym training progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="365">
+        <div class="progress-bar bg-primary" id="trainingProgress" style="width: 0%"></div>
+      </div>
+      <p class="text-muted mt-2 mb-0" id="gymStatus">Plan your workouts to start training!</p>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      
+      <div class="modal-header">
+  <h5 class="modal-title1 text-dark" id="editProfileModalLabel">Complete Your Profile</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+      
+      <div class="modal-body">
+        <form id="editProfileForm">
+          <div class="mb-3">
+            <label for="editName" class="form-label">Name</label>
+            <input type="text" class="form-control" id="editName" placeholder="Enter your full name" aria-describedby="nameHelp">
+            <div id="nameHelp" class="form-text">Your full name is required for personalized guidance.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="editWeight" class="form-label">Weight (kg)</label>
+            <input type="number" class="form-control" id="editWeight" placeholder="70" min="30" max="200" step="0.1" aria-describedby="weightHelp">
+            <div id="weightHelp" class="form-text">Enter your weight in kilograms (30-200 kg).</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="editAge" class="form-label">Age</label>
+            <input type="number" class="form-control" id="editAge" placeholder="30" min="16" max="100" aria-describedby="ageHelp">
+            <div id="ageHelp" class="form-text">Enter your age (16-100 years).</div>
+          </div>
+        </form>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="saveProfileBtn">Save & Continue</button>
+      </div>
+      
+    </div>
+  </div>
+</div>
+<!-- Recommendations Modal -->
+<div class="modal fade" id="recommendationsModal" tabindex="-1" aria-labelledby="recommendationsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="recommendationsModalLabel">Your Fitness Recommendations</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul id="recommendationsList" class="list-unstyled"></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+  <div class="container py-4">
+
+    <!-- Header -->
+  
+
+    <!-- CALENDAR SECTION -->
+    <section id="calendarSection" class="hidden">
+      <div class="card glass shadow-sm">
+        <div class="card-body">
+          <div id="calendarGrid" class="row g-2 text-center">
+            <!-- Days injected via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Go to Training Button -->
+      <div class="text-center mt-3" id="goTrainingContainer" style="display:none;">
+        <button class="btn btn-success btn-lg shadow" id="goTrainingBtn">
+          <i class="material-icons me-1">sports_gymnastics</i> Go to Training
+        </button>
+      </div>
+    </section>
+  
+    <!-- DASHBOARD -->
+   <section id="dashboardSection" class="hidden py-4">
+  <div class="container">
+    <div class="row gy-3">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <h3 id="todayHeading" class="mb-0 display-7 text-gradient" aria-label="Today's Workout">
+            <i class="material-icons me-2">check_circle</i> Today's Workout
+          </h3>
+          <div class="d-flex gap-2">
+            <button id="editBtn" class="btn btn-outline-dark btn-sm" aria-label="Edit Workout Plan">
+              <i class="material-icons">edit</i> Edit
+            </button>
+            <button id="resetBtn" class="btn btn-danger btn-sm" aria-label="Reset Workout Plan">
+              <i class="material-icons">delete</i> Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="todayCards" class="col-12 row g-3"></div>
+
+      <div class="col-12">
+        <div class="card glass shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Workout Timeline</h5>
+            <div class="chart-container position-relative" style="min-height: 200px;">
+              <canvas id="timelineChart"></canvas>
+              <div id="chartPlaceholder" class="text-center text-muted d-none">No workout data for today</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Exercise Description Modal -->
+<div class="modal fade" id="exerciseDescriptionModal" tabindex="-1" aria-labelledby="exerciseDescriptionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exerciseDescriptionModalLabel">Exercise Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <img id="exerciseImage" src="" alt="Exercise demo" class="img-fluid mb-3" style="max-height:200px;border-radius:10px;">
+        <p id="exerciseDescription" class="text-muted"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Timer Modal -->
+<div class="modal fade" id="timerModal" tabindex="-1" aria-labelledby="timerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h5 class="modal-title" id="timerModalLabel">Timer</h5>
+        <button type="button" class="btn-close" id="timerCloseBtn" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p id="timerExerciseName" class="mb-3"></p>
+
+        <!-- Timer Circular Progress -->
+        <div id="timerCircularProgress" class="circular-progress mb-3">
+          <svg viewBox="0 0 36 36">
+            <circle class="circle-bg" cx="18" cy="18" r="15.9155" stroke-width="2" fill="none" />
+            <circle class="circle" cx="18" cy="18" r="15.9155" stroke-width="2" fill="none"
+              stroke-linecap="round" stroke-dasharray="100" stroke-dashoffset="100" />
+          </svg>
+          <div class="progress-text" id="timerCircularText">00:00</div>
+        </div>
+
+        <div class="d-flex justify-content-center gap-2">
+          <button id="startTimerBtn" class="btn btn-primary btn-sm" aria-label="Start Timer">Start</button>
+          <button id="pauseTimerBtn" class="btn btn-secondary btn-sm" aria-label="Pause Timer" disabled>Pause</button>
+          <button id="resetTimerBtn" class="btn btn-danger btn-sm" aria-label="Reset Timer">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Counter Modal -->
+<div class="modal fade" id="counterModal" tabindex="-1" aria-labelledby="counterModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h5 class="modal-title" id="counterModalLabel">Counter</h5>
+        <button type="button" class="btn-close" id="counterCloseBtn" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p id="counterExerciseName" class="mb-3"></p>
+
+        <!-- Counter Circular Progress -->
+        <div id="counterCircularProgress" class="circular-progress mb-3">
+          <svg viewBox="0 0 36 36">
+            <circle class="circle-bg" cx="18" cy="18" r="15.9155" stroke-width="2" fill="none" />
+            <circle class="circle" cx="18" cy="18" r="15.9155" stroke-width="2" fill="none"
+              stroke-linecap="round" stroke-dasharray="100" stroke-dashoffset="100" />
+          </svg>
+          <div class="progress-text" id="counterCircularText">0/0</div>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-center mb-3 gap-2">
+          <button id="decrementCounterBtn" class="btn btn-outline-dark btn-sm" aria-label="Decrement Counter">-</button>
+          <button id="incrementCounterBtn" class="btn btn-outline-dark btn-sm" aria-label="Increment Counter">+</button>
+        </div>
+
+        <div class="d-flex justify-content-center gap-2 mb-3">
+          <button id="startMotionCounterBtn" class="btn btn-success btn-sm" aria-label="Start Motion Counter">Start Motion Detection</button>
+          <button id="resetCounterBtn" class="btn btn-danger btn-sm" aria-label="Reset Counter">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  
+    <!-- CATEGORY MODAL -->
+    <div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass p-3">
+          <div class="modal-header border-0">
+            <h5 class="modal-title"><i class="material-icons me-2">calendar_today</i> Choose Categories</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3 text-center">
+              <button class="btn btn-outline-success btn-rest mb-2">Rest Day 
+                <i class="material-icons ms-1">bed</i>
+              </button>
+            </div>
+            <div id="modalCategoryGrid" class="d-flex flex-wrap justify-content-center gap-2">
+              <!-- Categories injected via JS -->
+            </div>
+          </div>
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-primary" id="modalSaveBtn">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Exercise Description Modal -->
+<div class="modal fade" id="exerciseDescriptionModal" tabindex="-1" aria-labelledby="exerciseDescriptionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exerciseDescriptionModalLabel">Exercise Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <img id="exerciseImage" src="" alt="Exercise demo" class="img-fluid mb-3" style="max-height: 200px; border-radius: 10px;">
+        <p id="exerciseDescription" class="text-muted"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </div>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎶 Music Party</title>
+
+<!-- Bootstrap 5 & Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.6.0/firebase-database-compat.js"></script>
+
+<style>
+#musicFab:hover { transform: scale(1.1); transition: 0.2s; }
+#musicModal .modal-content { border-radius: 1rem; }
+#playlist li.active { background: #0d6efd; color: #fff; }
+#playlist li { cursor: pointer; }
+.option-btn { width:150px; height:150px; font-size:14px; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+</style>
+</head>
+<body>
+
+<!-- FAB -->
+<button id="musicFab" class="btn btn-primary rounded-circle position-fixed shadow-lg"
+        style="bottom:20px;right:20px;width:60px;height:60px;font-size:28px;display:flex;align-items:center;justify-content:center;">
+  <i class="bi bi-music-note-beamed"></i>
+</button>
+
+<!-- Music Party Modal -->
+<div class="modal fade" id="musicModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="bi bi-vinyl me-2"></i> Music Party</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+
+        <!-- STEP 1: Choose -->
+        <div id="chooseSection" class="text-center">
+          <h5 class="mb-4">Start your party 🎉</h5>
+          <div class="d-flex justify-content-center gap-4">
+            <button id="chooseHost" class="btn btn-outline-primary rounded-circle shadow-lg p-4 option-btn">
+              <i class="bi bi-person-plus display-5"></i><br><span>Host a Party</span>
+            </button>
+            <button id="chooseJoin" class="btn btn-outline-success rounded-circle shadow-lg p-4 option-btn">
+              <i class="bi bi-people display-5"></i><br><span>Join a Party</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 2: Host Panel -->
+        <div id="hostPanel" class="d-none">
+          <h5 class="mb-3"><i class="bi bi-person-badge"></i> Host Controls</h5>
+          <audio id="audioPlayer" controls class="w-100 rounded shadow-sm mb-3"></audio>
+
+          <!-- Playlist -->
+          <div class="mb-3">
+            <label class="form-label"><i class="bi bi-music-note-list me-1"></i> Playlist</label>
+            <ul id="playlist" class="list-group">
+              <li class="list-group-item active" data-url="Tere jaisa.mp3">Tere Jaisa <i class="bi bi-play-fill"></i></li>
+              <li class="list-group-item" data-url="Track2.mp3">Track 2 <i class="bi bi-play-fill"></i></li>
+            </ul>
+          </div>
+
+          <!-- Controls -->
+          <div class="d-flex justify-content-center gap-2 mb-3">
+            <button id="prevBtn" class="btn btn-secondary"><i class="bi bi-skip-start-fill"></i> Prev</button>
+            <button id="nextBtn" class="btn btn-secondary">Next <i class="bi bi-skip-end-fill"></i></button>
+          </div>
+
+          <!-- Connection Info -->
+          <div class="alert alert-info text-center">
+            <span id="connectionCount" class="fw-bold">Connections: 0</span>
+          </div>
+        </div>
+
+        <!-- STEP 2: Join Panel -->
+        <div id="joinPanel" class="d-none">
+          <h5 class="mb-3"><i class="bi bi-link-45deg"></i> Join a Party</h5>
+          <div class="mb-3">
+            <label class="form-label">Enter Room ID</label>
+            <input id="hostSDPInput" class="form-control" placeholder="Room ID">
+          </div>
+          <button id="joinSubmit" class="btn btn-success w-100">
+            <i class="bi bi-check-circle"></i> Connect
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const audio = document.getElementById('audioPlayer');
+const playlist = document.getElementById('playlist');
+const connectionCount = document.getElementById('connectionCount');
+let localConnection, dataChannel, isHost=false, guestChannels=[], currentTrackIndex=0, roomRef;
+
+// Firebase init
+const firebaseConfig = {
+  apiKey: "AIzaSyDyq1nxDtx80s4PxyGgO8iRAhfX5f0Hg0M",
+  authDomain: "ngoaa-1581992169924.firebaseapp.com",
+  databaseURL: "https://ngoaa-1581992169924.firebaseio.com",
+  projectId: "ngoaa-1581992169924",
+  storageBucket: "ngoaa-1581992169924.appspot.com",
+  messagingSenderId: "714601884037",
+  appId: "1:714601884037:web:7a53288a98ebbfc5bd3cec",
+  measurementId: "G-0ERBB0KJ9T"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Modal open → reset & auto-fill Room ID
+document.getElementById('musicFab').addEventListener('click', ()=>{
+  document.getElementById('chooseSection').classList.remove('d-none');
+  document.getElementById('hostPanel').classList.add('d-none');
+  document.getElementById('joinPanel').classList.add('d-none');
+
+  const savedRoom = localStorage.getItem('currentRoomId');
+  if(savedRoom) document.getElementById('hostSDPInput').value = savedRoom;
+
+  new bootstrap.Modal(document.getElementById('musicModal')).show();
+});
+
+// Step 1: Host
+document.getElementById('chooseHost').addEventListener('click', async ()=>{
+  isHost = true;
+  document.getElementById('chooseSection').classList.add('d-none');
+  document.getElementById('hostPanel').classList.remove('d-none');
+
+  const roomId = prompt("Enter a Room ID:");
+  if(!roomId) return;
+  localStorage.setItem('currentRoomId', roomId);
+
+  roomRef = db.ref('rooms/' + roomId);
+  localConnection = new RTCPeerConnection();
+  dataChannel = localConnection.createDataChannel("musicSync");
+
+  dataChannel.onopen = ()=>{
+    const guestId = Date.now();
+    const guestRef = roomRef.child('guests/' + guestId);
+    guestRef.set(true);
+    guestChannels.push(dataChannel);
+
+    dataChannel.onclose = ()=> {
+      guestRef.remove();
+      guestChannels = guestChannels.filter(ch => ch !== dataChannel);
+      updateConnectionCount();
+    };
+  };
+
+  dataChannel.onmessage = e=>console.log("Guest message:", e.data);
+
+  const offer = await localConnection.createOffer();
+  await localConnection.setLocalDescription(offer);
+
+  await roomRef.update({ offer: JSON.stringify(offer), trackIndex: 0 });
+
+  // Sync playlist index & guest count for late joiners
+  roomRef.on('value', snapshot => {
+    const data = snapshot.val();
+    if(data.trackIndex !== undefined && data.trackIndex !== currentTrackIndex){
+      playTrack(data.trackIndex, false);
+    }
+    if(data.guests) connectionCount.textContent = "Connections: " + Object.keys(data.guests).length;
+    else connectionCount.textContent = "Connections: 0";
+  });
+
+  roomRef.on('child_added', snapshot => {
+    const data = snapshot.val();
+    if(data.answer && localConnection.signalingState === "have-local-offer"){
+      localConnection.setRemoteDescription(JSON.parse(data.answer));
+    }
+  });
+
+  alert("Share this Room ID with guests: " + roomId);
+});
+
+// Step 1: Join
+document.getElementById('chooseJoin').addEventListener('click', ()=>{
+  isHost = false;
+  document.getElementById('chooseSection').classList.add('d-none');
+  document.getElementById('joinPanel').classList.remove('d-none');
+});
+
+// Join → Submit
+document.getElementById('joinSubmit').addEventListener('click', async ()=>{
+  let roomId = document.getElementById('hostSDPInput').value.trim();
+  if(!roomId){
+    roomId = localStorage.getItem('currentRoomId');
+    if(!roomId) return alert("Please enter Room ID");
+  } else localStorage.setItem('currentRoomId', roomId);
+
+  roomRef = db.ref('rooms/' + roomId);
+  const snapshot = await roomRef.once('value');
+  const roomData = snapshot.val();
+  if(!roomData?.offer) return alert("Room not found");
+
+  localConnection = new RTCPeerConnection();
+  localConnection.ondatachannel = e => {
+    dataChannel = e.channel;
+
+    const guestId = Date.now();
+    const guestRef = roomRef.child('guests/' + guestId);
+    guestRef.set(true);
+    dataChannel.onclose = ()=> guestRef.remove();
+
+    dataChannel.onmessage = msg => {
+      const cmd = JSON.parse(msg.data);
+      if(cmd.type==="play") audio.currentTime=cmd.time, audio.play();
+      if(cmd.type==="pause") audio.pause();
+      if(cmd.type==="seek") audio.currentTime=cmd.time;
+      if(cmd.type==="track") playTrackByUrl(cmd.url);
+    }
+  };
+
+  await localConnection.setRemoteDescription(JSON.parse(roomData.offer));
+  const answer = await localConnection.createAnswer();
+  await localConnection.setLocalDescription(answer);
+
+  await roomRef.update({ answer: JSON.stringify(answer) });
+  alert("Connected to host!");
+});
+
+// Playlist click
+playlist.querySelectorAll('li').forEach((li, index) => {
+  li.addEventListener('click', () => playTrack(index, true));
+});
+
+function playTrack(index, isHostAction=false){
+  const items = playlist.querySelectorAll('li');
+  items.forEach(i=>i.classList.remove('active'));
+  items[index].classList.add('active');
+  audio.src = items[index].dataset.url;
+  audio.play();
+  currentTrackIndex = index;
+
+  if(isHostAction){
+    roomRef.update({ trackIndex: index });
+    sendCommand({type:"track", url:audio.src});
+  }
+}
+
+function playTrackByUrl(url){
+  const items = playlist.querySelectorAll('li');
+  items.forEach(i=>i.classList.remove('active'));
+  Array.from(items).find(i=>i.dataset.url===url)?.classList.add('active');
+  audio.src = url;
+  audio.play();
+  currentTrackIndex = Array.from(items).findIndex(i=>i.dataset.url===url);
+}
+
+// Next / Prev
+document.getElementById('nextBtn').addEventListener('click', ()=> playTrack((currentTrackIndex+1)%playlist.querySelectorAll('li').length, true));
+document.getElementById('prevBtn').addEventListener('click', ()=> playTrack((currentTrackIndex-1+playlist.querySelectorAll('li').length+playlist.querySelectorAll('li').length)%playlist.querySelectorAll('li').length, true));
+
+// Audio events
+["play","pause","seeked"].forEach(evt=>{
+  audio.addEventListener(evt, ()=>{ if(isHost) sendCommand({type:evt, time:audio.currentTime}); });
+});
+
+// Send commands to guests
+function sendCommand(cmd){
+  if(isHost && guestChannels.length){
+    guestChannels.forEach(ch=> ch.readyState==="open" && ch.send(JSON.stringify(cmd)));
+  }
+}
+
+// Update connection count
+function updateConnectionCount(){
+  connectionCount.textContent = "Connections: " + guestChannels.length;
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<style>
+#musicFab:hover { transform: scale(1.1); transition: 0.2s; }
+#musicModal .modal-content { border-radius: 1rem; }
+#playlist li.active { background: #0d6efd; color: #fff; }
+#playlist li { cursor: pointer; }
+.option-btn { width:150px; height:150px; font-size:14px; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+</style>
+
+
+
+  <!-- FOOTER -->
+  <footer class="bg-white shadow-sm mt-5 py-4">
+    <div class="container text-center">
+      <p class="mb-1">&copy; 2025 ProBody. All rights reserved.</p>
+      <div>
+        <a href="#" class="text-decoration-none mx-2">Privacy</a> |
+        <a href="#" class="text-decoration-none mx-2">Terms</a> |
+        <a href="#" class="text-decoration-none mx-2">Support</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Dependencies -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+  <!-- App Script -->
+  <script src="script.js"></script>
+</body>
+</html>
