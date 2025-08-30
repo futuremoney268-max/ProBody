@@ -580,9 +580,9 @@ let notificationCount = 0;
 let globalCaptureCount = 0;
 
 const demoOverlays = {
-    Front: "/front.png",
-    Back: "/back.png",
-    Side: "/1side.png"
+    Front: "./front.png",
+    Back: "./back.png",
+    Side: "./1side.png"
 };
 
 const timerOptions = [0, 3, 5, 10];
@@ -601,7 +601,7 @@ $(document).ready(() => {
 
 async function loadNotificationsFromJson() {
     try {
-        const response = await fetch('/notification.json');
+        const response = await fetch('./notification.json');
         const notifications = await response.json();
         notifications
             .sort((a, b) => b.priority - a.priority) // Sort by priority (5 to 1)
@@ -869,7 +869,7 @@ function updateNotificationBadge() {
 
 async function loadGlobalCaptureCount() {
     try {
-        const response = await fetch('/count.json');
+        const response = await fetch('./count.json');
         const data = await response.json();
         const count = data.count || 0;
         $("#globalCount").text(count); // Set count directly to textview
@@ -890,7 +890,7 @@ async function updateGlobalCaptureCount() {
         let count = parseInt($globalCount.text()) || 0; // Read count from textview
         count++;
         $globalCount.text(count); // Update textview
-        await fetch('/update.php', {
+        await fetch('./update.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ count })
