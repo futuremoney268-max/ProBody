@@ -204,7 +204,7 @@
     }
     const db = firebase.database();
     
-    // --- NEW: WebRTC Configuration with STUN servers ---
+    // --- WebRTC Configuration with STUN servers ---
     const peerConnectionConfig = {
       'iceServers': [
         { 'urls': 'stun:stun.l.google.com:19302' },
@@ -276,9 +276,24 @@
         infoBar.innerHTML = `Room ID: <strong class="user-select-all">${roomId}</strong> | Guests: <span id="connectionCount">0</span>`;
         roomRef = db.ref('rooms/' + roomId);
 
-        // MODIFIED: Use the config object
         peerConnection = new RTCPeerConnection(peerConnectionConfig);
         
+        // --- NEW LOGIC: Handle ICE candidates ---
+        peerConnection.onicecandidate = event => {
+            if (event.candidate) {
+                logToUI('Found local ICE candidate. Sending to guest...', 'sync');
+                roomRef.child('hostCandidates').push().set(JSON.stringify(event.candidate));
+            }
+        };
+        
+        // --- NEW LOGIC: Listen for guest's ICE candidates ---
+        roomRef.child('guestCandidates').on('child_added', snapshot => {
+            if (snapshot.exists()) {
+                logToUI('Received ICE candidate from guest. Adding...', 'sync');
+                peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(snapshot.val())));
+            }
+        });
+
         logToUI('Waiting for guests to connect...', 'info');
 
         roomRef.child('answers').on('child_added', async snapshot => {
@@ -322,9 +337,23 @@
         }
 
         infoBar.innerHTML = `<i class="bi bi-earbuds"></i> Connected to Party: <strong>${roomId}</strong>`;
-
-        // MODIFIED: Use the config object
         peerConnection = new RTCPeerConnection(peerConnectionConfig);
+        
+        // --- NEW LOGIC: Handle ICE candidates ---
+        peerConnection.onicecandidate = event => {
+            if (event.candidate) {
+                logToUI('Found local ICE candidate. Sending to host...', 'sync');
+                roomRef.child('guestCandidates').push().set(JSON.stringify(event.candidate));
+            }
+        };
+
+        // --- NEW LOGIC: Listen for host's ICE candidates ---
+        roomRef.child('hostCandidates').on('child_added', snapshot => {
+            if(snapshot.exists()){
+                logToUI('Received ICE candidate from host. Adding...', 'sync');
+                peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(snapshot.val())));
+            }
+        });
         
         dataChannel = peerConnection.createDataChannel('guest-channel');
         dataChannel.onmessage = (event) => {
@@ -341,7 +370,7 @@
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
         await roomRef.child('answers').push().set(JSON.stringify(answer));
-        logToUI('Answer sent to host. Waiting for connection...', 'action');
+        logToUI('Answer sent to host. Exchanging connection details...', 'action');
     }
     
     // --- PLAYER & SYNC LOGIC (No changes below this point) ---
