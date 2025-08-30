@@ -23,7 +23,7 @@
             min-height: 100vh;
             padding: 20px;
             box-sizing: border-box;
-            padding-bottom: 100px;
+            padding-bottom: 100px; /* Space for the bottom bar */
         }
         #welcome-screen .card {
             background-color: #ffffff;
@@ -81,8 +81,6 @@
     </style>
 </head>
 <body>
-
-    <!-- App Container -->
     <div id="app-container">
         <!-- WELCOME SCREEN -->
         <div id="welcome-screen" class="screen">
@@ -91,9 +89,7 @@
                     <i class="bi bi-music-note-beamed" style="font-size: 4rem; color: #1DB954;"></i>
                     <h2 class="card-title my-3">Welcome to Music Party</h2>
                     <p class="card-text text-muted mb-4">Sync music with friends in real-time.</p>
-                    <div class="d-grid gap-3">
-                        <button id="hostBtn" class="btn btn-success btn-lg btn-action"><i class="bi bi-person-plus-fill me-2"></i>Host a New Party</button>
-                    </div>
+                    <div class="d-grid gap-3"><button id="hostBtn" class="btn btn-success btn-lg btn-action"><i class="bi bi-person-plus-fill me-2"></i>Host a New Party</button></div>
                     <hr class="my-4">
                     <h5 class="mb-3">Or Join an Existing Party</h5>
                     <div class="input-group">
@@ -112,7 +108,7 @@
                 <div id="current-song-title" class="song-title">Select a song</div>
                 <div class="artist">Music Party</div>
                 <audio id="audioPlayer" class="w-100 my-3 d-none" crossOrigin="anonymous"></audio>
-                <div class="player-controls d-flex justify-content-center align-items-center gap-4 mb-4">
+                <div class="player-controls d-flex justify-content-center align-items: center gap-4 mb-4">
                     <button id="prevBtn" class="btn btn-lg text-dark"><i class="bi bi-skip-start-fill fs-2"></i></button>
                     <button id="playPauseBtn" class="btn btn-dark rounded-circle" style="width: 65px; height: 65px; font-size: 2.2rem; display: flex; align-items: center; justify-content: center;"><i class="bi bi-play-fill"></i></button>
                     <button id="nextBtn" class="btn btn-lg text-dark"><i class="bi bi-skip-end-fill fs-2"></i></button>
@@ -125,7 +121,7 @@
                 </ul>
             </div>
             <div class="action-bar fixed-bottom bg-light p-3">
-                <div class="container d-flex justify-content-between align-items-center" style="max-width: 450px;">
+                <div class="container d-flex justify-content-between align-items: center" style="max-width: 450px;">
                     <i class="bi bi-volume-up-fill fs-4 text-muted"></i>
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#logModal"><i class="bi bi-terminal me-2"></i>Console</button>
@@ -135,15 +131,12 @@
             </div>
         </div>
     </div>
-    
+
     <!-- LOG MODAL -->
     <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="logModalLabel"><i class="bi bi-terminal me-2"></i>Event Log</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+                <div class="modal-header"><h5 class="modal-title" id="logModalLabel"><i class="bi bi-terminal me-2"></i>Event Log</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
                 <div class="modal-body"><div id="log-popup-content"></div></div>
                 <div class="modal-footer">
                     <button type="button" id="clearLogBtn" class="btn btn-warning">Clear Log</button>
@@ -153,14 +146,12 @@
         </div>
     </div>
 
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // --- DOM ELEMENTS ---
+    // --- DOM ELEMENTS & STATE ---
     const welcomeScreen = document.getElementById('welcome-screen');
     const playerScreen = document.getElementById('player-screen');
     const audio = document.getElementById('audioPlayer');
@@ -171,76 +162,53 @@
     const logPopupContent = document.getElementById('log-popup-content');
     const playIcon = '<i class="bi bi-play-fill"></i>';
     const pauseIcon = '<i class="bi bi-pause-fill"></i>';
-
-    // --- STATE VARIABLES ---
-    let peerConnection, dataChannel;
     let isHost = false;
-    let guestChannels = [];
-    let currentTrackIndex = 0;
     let roomRef;
-    const playlistItems = document.querySelectorAll('#playlist li');
+    let guestConnections = {}; // Stores { guestId: RTCPeerConnection }
+    let guestChannels = [];
     const SESSION_STORAGE_KEY = 'musicPartySession';
-
-    // --- VISUALIZER VARIABLES ---
     const canvas = document.getElementById('audioVisualizer');
     const canvasCtx = canvas.getContext('2d');
     let audioContext, analyser, source, dataArray;
     let visualizerInitialized = false;
+    let currentTrackIndex = 0;
+    const playlistItems = document.querySelectorAll('#playlist li');
 
-    // --- FIREBASE CONFIG ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyDyq1nxDtx80s4PxyGgO8iRAhfX5f0Hg0M",
-        authDomain: "ngoaa-1581992169924.firebaseapp.com",
-        databaseURL: "https://ngoaa-1581992169924.firebaseio.com",
-        projectId: "ngoaa-1581992169924",
-        storageBucket: "ngoaa-1581992169924.appspot.com",
-        messagingSenderId: "714601884037",
-        appId: "1:714601884037:web:7a53288a98ebbfc5bd3cec",
-        measurementId: "G-0ERBB0KJ9T"
-    };
-    
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
+    // --- CONFIGURATION ---
+    const firebaseConfig = {"apiKey":"AIzaSyDyq1nxDtx80s4PxyGgO8iRAhfX5f0Hg0M","authDomain":"ngoaa-1581992169924.firebaseapp.com","databaseURL":"https://ngoaa-1581992169924.firebaseio.com","projectId":"ngoaa-1581992169924","storageBucket":"ngoaa-1581992169924.appspot.com","messagingSenderId":"714601884037","appId":"1:714601884037:web:7a53288a98ebbfc5bd3cec","measurementId":"G-0ERBB0KJ9T"};
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
-    // --- WebRTC Configuration with STUN servers ---
-    const peerConnectionConfig = {
-      'iceServers': [
-        { 'urls': 'stun:stun.l.google.com:19302' },
-        { 'urls': 'stun:stun1.l.google.com:19302' }
-      ]
-    };
-    
-    // --- INITIALIZATION & SESSION MANAGEMENT ---
+    const peerConnectionConfig = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'},{'urls': 'stun:stun1.l.google.com:19302'}]};
+
+    // --- SETUP & SESSION MANAGEMENT ---
     window.addEventListener('DOMContentLoaded', () => {
-        const savedSessionRaw = localStorage.getItem(SESSION_STORAGE_KEY);
-        if (savedSessionRaw) {
-            const session = JSON.parse(savedSessionRaw);
-            if (session && session.roomId) {
+        const sessionRaw = localStorage.getItem(SESSION_STORAGE_KEY);
+        if (sessionRaw) {
+            const session = JSON.parse(sessionRaw);
+            if (session.roomId) {
                 isHost = session.isHost;
-                if (isHost) startHostSession(session.roomId);
-                else startGuestSession(session.roomId);
+                isHost ? startHostSession(session.roomId) : startGuestSession(session.roomId);
             }
         }
     });
-
     function setupHost() {
         isHost = true;
         const roomId = prompt("Enter a unique name for your party room:", `party-${Math.random().toString(36).substr(2, 5)}`);
-        if (!roomId) return;
-        localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ roomId, isHost: true }));
-        startHostSession(roomId);
+        if (roomId) {
+            localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ roomId, isHost: true }));
+            startHostSession(roomId);
+        }
     }
-    
     function setupGuest() {
         isHost = false;
         const roomId = document.getElementById('roomIdInput').value.trim();
-        if (!roomId) return alert("Please enter a Room ID.");
-        localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ roomId, isHost: false }));
-        startGuestSession(roomId);
+        if (roomId) {
+            localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ roomId, isHost: false }));
+            startGuestSession(roomId);
+        } else {
+            alert("Please enter a Room ID.");
+        }
     }
-
     document.getElementById('hostBtn').addEventListener('click', setupHost);
     document.getElementById('joinBtn').addEventListener('click', setupGuest);
     document.getElementById('leaveBtn').addEventListener('click', disconnect);
@@ -258,122 +226,131 @@
     async function disconnect() {
         logToUI('Leaving party and clearing session...', 'error');
         localStorage.removeItem(SESSION_STORAGE_KEY);
-        if (peerConnection) peerConnection.close();
+        Object.values(guestConnections).forEach(pc => pc.close());
+        guestConnections = {};
+        guestChannels = [];
         if (isHost && roomRef) await roomRef.remove();
         if (roomRef) roomRef.off();
         isHost = false;
-        guestChannels = [];
-        playPauseBtn.innerHTML = playIcon;
         audio.pause();
         audio.currentTime = 0;
         showScreen('welcome');
     }
-    
+
     // --- CORE WEBRTC & FIREBASE LOGIC ---
     async function startHostSession(roomId) {
         showScreen('player');
-        logToUI(`Starting host session for room: <strong>${roomId}</strong>`, 'success');
         infoBar.innerHTML = `Room ID: <strong class="user-select-all">${roomId}</strong> | Guests: <span id="connectionCount">0</span>`;
         roomRef = db.ref('rooms/' + roomId);
 
-        peerConnection = new RTCPeerConnection(peerConnectionConfig);
+        await roomRef.remove();
+        logToUI(`Starting host session for room: <strong>${roomId}</strong>`, 'success');
         
-        // --- NEW LOGIC: Handle ICE candidates ---
+        const tempPC = new RTCPeerConnection(peerConnectionConfig);
+        const offer = await tempPC.createOffer();
+        await tempPC.setLocalDescription(offer);
+        const offerDescription = tempPC.localDescription;
+        tempPC.close();
+
+        await roomRef.child('offer').set(JSON.stringify(offerDescription));
+        logToUI('Waiting for guests to connect...', 'info');
+        
+        roomRef.child('connections').on('child_added', snapshot => {
+            const guestId = snapshot.key;
+            const guestData = snapshot.val();
+            if (guestData.answer && !guestConnections[guestId]) {
+                handleGuestConnection(guestId, guestData.answer, offerDescription);
+            }
+        });
+    }
+
+    async function handleGuestConnection(guestId, answer, offer) {
+        logToUI(`New guest [${guestId.substr(0, 5)}] attempting to join...`, 'info');
+
+        const peerConnection = new RTCPeerConnection(peerConnectionConfig);
+        guestConnections[guestId] = peerConnection;
+
         peerConnection.onicecandidate = event => {
             if (event.candidate) {
-                logToUI('Found local ICE candidate. Sending to guest...', 'sync');
-                roomRef.child('hostCandidates').push().set(JSON.stringify(event.candidate));
+                roomRef.child('connections').child(guestId).child('hostCandidates').push().set(JSON.stringify(event.candidate));
             }
         };
-        
-        // --- NEW LOGIC: Listen for guest's ICE candidates ---
-        roomRef.child('guestCandidates').on('child_added', snapshot => {
+
+        roomRef.child('connections').child(guestId).child('guestCandidates').on('child_added', snapshot => {
             if (snapshot.exists()) {
-                logToUI('Received ICE candidate from guest. Adding...', 'sync');
                 peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(snapshot.val())));
             }
         });
 
-        logToUI('Waiting for guests to connect...', 'info');
-
-        roomRef.child('answers').on('child_added', async snapshot => {
-            if (snapshot.exists() && peerConnection.signalingState !== 'stable') {
-                logToUI('Received answer from a guest. Attempting to connect...', 'sync');
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(snapshot.val())));
-            }
-        });
-
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        await roomRef.child('offer').set(JSON.stringify(offer));
-        
         peerConnection.ondatachannel = (event) => {
             const channel = event.channel;
             guestChannels.push(channel);
+            
             channel.onopen = () => {
-                logToUI('A guest has connected successfully!', 'success');
+                logToUI(`Guest [${guestId.substr(0, 5)}] connected successfully!`, 'success');
                 updateConnectionCount();
-                sendCommand({ type: 'track', index: currentTrackIndex, time: audio.currentTime });
-                if (!audio.paused) sendCommand({ type: 'play', time: audio.currentTime });
+                sendCommandToChannel(channel, { type: 'track', index: currentTrackIndex, time: audio.currentTime });
+                if (!audio.paused) sendCommandToChannel(channel, { type: 'play', time: audio.currentTime });
             };
+            
             channel.onclose = () => {
-                logToUI('A guest has disconnected.', 'error');
+                logToUI(`Guest [${guestId.substr(0, 5)}] disconnected.`, 'error');
                 guestChannels = guestChannels.filter(c => c !== channel);
+                delete guestConnections[guestId];
                 updateConnectionCount();
             };
         };
-        if (!audio.src) playTrack(0, false);
+        
+        await peerConnection.setLocalDescription(offer);
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(answer)));
     }
 
     async function startGuestSession(roomId) {
         showScreen('player');
         logToUI(`Attempting to join room: <strong>${roomId}</strong>`, 'info');
         roomRef = db.ref('rooms/' + roomId);
-        const snapshot = await roomRef.child('offer').once('value');
-        if (!snapshot.exists()) {
-            alert("Room not found. The host may have left.");
+        const offerSnapshot = await roomRef.child('offer').once('value');
+        if (!offerSnapshot.exists()) {
+            alert("Room not found. The host may have left or hasn't started yet.");
             disconnect();
             return;
         }
 
         infoBar.innerHTML = `<i class="bi bi-earbuds"></i> Connected to Party: <strong>${roomId}</strong>`;
-        peerConnection = new RTCPeerConnection(peerConnectionConfig);
         
-        // --- NEW LOGIC: Handle ICE candidates ---
+        const connectionRef = roomRef.child('connections').push();
+        const peerConnection = new RTCPeerConnection(peerConnectionConfig);
+
         peerConnection.onicecandidate = event => {
             if (event.candidate) {
-                logToUI('Found local ICE candidate. Sending to host...', 'sync');
-                roomRef.child('guestCandidates').push().set(JSON.stringify(event.candidate));
+                connectionRef.child('guestCandidates').push().set(JSON.stringify(event.candidate));
             }
         };
 
-        // --- NEW LOGIC: Listen for host's ICE candidates ---
-        roomRef.child('hostCandidates').on('child_added', snapshot => {
+        connectionRef.child('hostCandidates').on('child_added', snapshot => {
             if(snapshot.exists()){
-                logToUI('Received ICE candidate from host. Adding...', 'sync');
                 peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(snapshot.val())));
             }
         });
-        
-        dataChannel = peerConnection.createDataChannel('guest-channel');
-        dataChannel.onmessage = (event) => {
-            logToUI(`RX: <pre class="d-inline">${event.data}</pre>`, 'sync');
-            handleCommand(JSON.parse(event.data));
-        }
+
+        const dataChannel = peerConnection.createDataChannel('guest-channel');
+        dataChannel.onmessage = (event) => handleCommand(JSON.parse(event.data));
         dataChannel.onopen = () => logToUI('Connection to host is live!', 'success');
         dataChannel.onclose = () => {
             alert("Disconnected from host. The party may have ended.");
             disconnect();
         };
 
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(snapshot.val())));
+        const offer = JSON.parse(offerSnapshot.val());
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
-        await roomRef.child('answers').push().set(JSON.stringify(answer));
+        
+        await connectionRef.child('answer').set(JSON.stringify(answer));
         logToUI('Answer sent to host. Exchanging connection details...', 'action');
     }
-    
-    // --- PLAYER & SYNC LOGIC (No changes below this point) ---
+
+    // --- PLAYER & SYNC LOGIC ---
     function handleCommand(cmd) {
         switch (cmd.type) {
             case 'play': audio.currentTime = cmd.time; audio.play(); break;
@@ -389,6 +366,11 @@
             guestChannels.forEach(channel => {
                 if (channel.readyState === 'open') channel.send(commandStr);
             });
+        }
+    }
+    function sendCommandToChannel(channel, cmd) {
+        if (channel && channel.readyState === 'open') {
+            channel.send(JSON.stringify(cmd));
         }
     }
     function playTrack(index, fromHostAction = false, startTime = 0) {
@@ -432,6 +414,8 @@
     audio.addEventListener('seeked', () => {
         if (isHost) sendCommand({ type: 'seek', time: audio.currentTime });
     });
+
+    // --- VISUALIZER & UTILITIES ---
     function setupAudioVisualizer() {
         try {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -442,7 +426,6 @@
             analyser.fftSize = 256;
             dataArray = new Uint8Array(analyser.frequencyBinCount);
             visualizerInitialized = true;
-            logToUI('Audio visualizer initialized.', 'success');
         } catch (e) {
             logToUI('Error initializing audio context for visualizer.', 'error');
             console.error(e);
@@ -471,10 +454,7 @@
     }
     function updateConnectionCount() {
         const countEl = document.getElementById('connectionCount');
-        if (countEl) {
-            const openChannels = guestChannels.filter(c => c.readyState === 'open').length;
-            countEl.textContent = openChannels;
-        }
+        if (countEl) countEl.textContent = guestChannels.length;
     }
     function logToUI(message, type = 'info') {
         const timestamp = new Date().toLocaleTimeString();
