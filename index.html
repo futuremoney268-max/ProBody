@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pro Body – Body Progress Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Fonts & CSS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root{
+      --bg-grad-start:#141e30;
+      --bg-grad-end:#243b55;
+      --glass:rgba(255,255,255,0.06);
+      --accent:#ff6f61;
+      --accent-2:#ff3b2f;
+      --muted:#cfd3dc;
+      --card-shadow:0 12px 40px rgba(0,0,0,.35);
+      --radius-xl:1.25rem;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 10% 0%, rgba(255,255,255,.06), transparent 60%),
+                  linear-gradient(135deg, var(--bg-grad-start), var(--bg-grad-end));
+      color: #fff;
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* NAV */
+    .navbar {
+      background: linear-gradient(0deg, rgba(0,0,0,.15), rgba(0,0,0,.15));
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .navbar-brand img { height: 36px; width: 36px; border-radius: 20%; object-fit: cover; }
+    .nav-link { color: #e9edf4 !important; opacity: .9; }
+    .nav-link:hover { opacity: 1; }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      padding: clamp(3rem, 5vw, 6rem) 1rem;
+      text-align: center;
+    }
+    .hero-card {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: clamp(2rem, 4vw, 3rem);
+      border-radius: var(--radius-xl);
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--card-shadow);
+    }
+    .app-logo {
+      height: 120px; width: 120px;
+      border-radius: 25%;
+      object-fit: cover;
+      box-shadow: 0 8px 30px rgba(0,0,0,.45);
+    }
+    .hero h1 {
+      font-weight: 800;
+      font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: -0.02em;
+      margin: 1rem 0 .5rem;
+    }
+    .hero p.lead {
+      color: var(--muted);
+      max-width: 760px;
+      margin: 0 auto 1.25rem;
+      line-height: 1.6;
+    }
+
+    /* Badges */
+    .stat-badges {
+      gap: .75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .stat {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .5rem .9rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.09);
+      font-weight: 600;
+      font-size: .95rem;
+    }
+    .stat i { width: 18px; height: 18px; }
+
+    /* CTA */
+    .btn-accent {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      padding: .9rem 1.4rem;
+      border-radius: 999px;
+      font-weight: 700;
+      box-shadow: 0 12px 30px rgba(255,111,97,.35);
+      transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
+    }
+    .btn-accent:hover { background: var(--accent-2); transform: translateY(-1px); box-shadow: 0 14px 36px rgba(255,59,47,.4); }
+    .btn-ghost {
+      border-radius: 999px;
+      padding: .9rem 1.2rem;
+      border: 1px solid rgba(255,255,255,.25);
+      color: #fff;
+      background: transparent;
+      backdrop-filter: blur(6px);
+      transition: border-color .2s ease, transform .15s ease;
+    }
+    .btn-ghost:hover { border-color: #fff; transform: translateY(-1px); }
+
+    .section {
+      padding: clamp(2.5rem, 4.5vw, 4rem) 0;
+    }
+    .section-title {
+      text-align: center;
+      font-weight: 700;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.01em;
+    }
+    .section-sub {
+      text-align: center;
+      color: var(--muted);
+      max-width: 760px;
+      margin: 0 auto 2rem;
+    }
+
+    /* Feature Cards */
+    .feature-card {
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius-xl);
+      padding: 1.4rem;
+      height: 100%;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--card-shadow);
+      border-color: rgba(255,255,255,.18);
+    }
+    .feature-icon {
+      width: 42px; height: 42px; border-radius: 12px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(255,111,97,.15);
+      border: 1px solid rgba(255,111,97,.4);
+      margin-bottom: .8rem;
+    }
+    .feature-icon i { width: 22px; height: 22px; color: var(--accent); }
+
+    /* Screenshots */
+    .carousel-wrap {
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius-xl);
+      padding: 1rem;
+      box-shadow: var(--card-shadow);
+    }
+    .screenshot-img{
+      width: 100%;
+      height: auto;
+      max-height: 520px;
+      object-fit: contain;
+      background: #000;
+      border-radius: 1rem;
+      box-shadow: 0 6px 24px rgba(0,0,0,.45);
+    }
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon { filter: invert(1) grayscale(1); }
+
+    /* Video */
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: var(--radius-xl);
+      border: 1px solid rgba(255,255,255,.08);
+      background: #000;
+      box-shadow: var(--card-shadow);
+    }
+    .video-container video, .video-container iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+    }
+
+    /* Reviews */
+    .review-card {
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius-xl);
+      padding: 1.1rem 1.2rem;
+      height: 100%;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .review-card:hover { transform: translateY(-4px); box-shadow: var(--card-shadow); }
+    .review-avatar {
+      width: 48px; height: 48px; border-radius: 50%; object-fit: cover; margin-right: .8rem;
+      border: 1px solid rgba(255,255,255,.15);
+    }
+    .review-name { font-weight: 700; margin: 0; }
+    .review-text { color: var(--muted); margin: .25rem 0 0; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,.14));
+      color: #dfe4ee;
+      padding: 1.2rem 0;
+      text-align: center;
+      font-size: .95rem;
+    }
+
+    /* Utilities */
+    .muted { color: var(--muted); }
+    .divider { height: 1px; background: rgba(255,255,255,.08); margin: 2rem 0; }
+  </style>
+</head>
+
+<body>
+  <!-- NAV -->
+  <nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+        <img src="/Logo.png" alt="Pro Body Logo">
+        <span class="fw-bold">Pro Body</span>
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div id="nav" class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+          <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+          <li class="nav-item"><a class="nav-link" href="#screenshots">Screenshots</a></li>
+          <li class="nav-item"><a class="nav-link" href="#video">Demo</a></li>
+          <li class="nav-item"><a class="nav-link" href="#reviews">Reviews</a></li>
+          <li class="nav-item ms-lg-2">
+            <a class="btn btn-accent d-flex align-items-center gap-2" href="/base.apk">
+              <i data-lucide="download"></i> Download Android APK
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-card">
+      <img src="/Logo.png" class="app-logo" alt="Pro Body Logo" />
+      <h1>Track. Compare. Transform.</h1>
+      <p class="lead">Pro Body helps you capture daily progress photos, compare timelines, compress images efficiently, and stay accountable with clean visual insights.</p>
+
+      <div class="d-flex stat-badges">
+        <span class="stat"><i data-lucide="user"></i> Aigen (Debjit Baishnab)</span>
+        <span class="stat"><i data-lucide="hard-drive"></i> 4.3&nbsp;MB</span>
+        <span class="stat"><i data-lucide="star"></i> 4.5 / 5</span>
+        <span class="stat"><i data-lucide="shield"></i> Privacy-friendly</span>
+      </div>
+
+      <div class="d-flex justify-content-center gap-2 flex-wrap">
+        <a class="btn btn-accent d-flex align-items-center gap-2" href="/base.apk">
+          <i data-lucide="download"></i> Download for Android
+        </a>
+        <a class="btn btn-ghost d-flex align-items-center gap-2 disabled" href="#" aria-disabled="true">
+          <i data-lucide="smartphone"></i> iOS (coming soon)
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- FEATURES -->
+  <section id="features" class="section container">
+    <h2 class="section-title">Why Pro Body</h2>
+    <p class="section-sub">Everything you need to document and visualize your fitness journey in one fast, privacy-respecting app.</p>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-card h-100">
+          <div class="feature-icon"><i data-lucide="camera"></i></div>
+          <h5 class="fw-bold mb-1">Daily Capture</h5>
+          <p class="muted mb-0">Take consistent photos with subtle guidance for framing and lighting, so comparisons are accurate.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card h-100">
+          <div class="feature-icon"><i data-lucide="images"></i></div>
+          <h5 class="fw-bold mb-1">Progress Timeline</h5>
+          <p class="muted mb-0">View side-by-side comparisons and a smooth timeline to see change clearly over time.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card h-100">
+          <div class="feature-icon"><i data-lucide="scissors"></i></div>
+          <h5 class="fw-bold mb-1">Smart Compression</h5>
+          <p class="muted mb-0">Compress and save photos efficiently without noticeable quality loss to keep storage lean.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREENSHOTS -->
+  <section id="screenshots" class="section container">
+    <h2 class="section-title">Screenshots</h2>
+    <p class="section-sub">A quick glimpse of the capture flow, timeline comparison, and compression tool.</p>
+
+    <div class="carousel-wrap">
+      <div id="screenshotCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner" id="carouselInner"><!-- Injected by JS --></div>
+
+        <button class="carousel-control-prev" type="button" data-bs-target="#screenshotCarousel" data-bs-slide="prev" aria-label="Previous screenshot">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#screenshotCarousel" data-bs-slide="next" aria-label="Next screenshot">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        </button>
+
+        <div class="carousel-indicators" id="carouselIndicators"><!-- Injected by JS --></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO VIDEO -->
+  <section id="video" class="section container">
+    <h2 class="section-title">Watch the Demo</h2>
+    <p class="section-sub">See how fast it is to capture and compare your progress with Pro Body.</p>
+
+    <div class="video-container">
+      <!-- Replace demo.mp4 with your actual path -->
+      <video controls preload="metadata" poster="/Screenshot_1.jpg">
+        <source src="/demo.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </section>
+
+  <!-- REVIEWS -->
+  <section id="reviews" class="section container">
+    <h2 class="section-title">What Users Say</h2>
+    <p class="section-sub">Real feedback from people who track consistently and stay motivated.</p>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="review-card h-100 d-flex align-items-start">
+          <img class="review-avatar" src="/Logo.png" alt="Reviewer avatar">
+          <div>
+            <p class="review-name">Jane D.</p>
+            <p class="review-text">“Clean and fast. Daily capture makes it effortless to stay consistent.”</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="review-card h-100 d-flex align-items-start">
+          <img class="review-avatar" src="/Logo.png" alt="Reviewer avatar">
+          <div>
+            <p class="review-name">Mark S.</p>
+            <p class="review-text">“Timeline comparison is exactly what I needed. The compression tool saves tons of space.”</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="review-card h-100 d-flex align-items-start">
+          <img class="review-avatar" src="/Logo.png" alt="Reviewer avatar">
+          <div>
+            <p class="review-name">Sara L.</p>
+            <p class="review-text">“Looks polished and works offline. Privacy controls are a big plus.”</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container d-flex flex-column flex-sm-row align-items-center justify-content-between gap-2">
+      <span>© <span id="year"></span> Pro Body by Aigen (Debjit Baishnab)</span>
+      <div class="d-flex align-items-center gap-3">
+        <a class="text-decoration-none text-light" href="#features">Features</a>
+        <a class="text-decoration-none text-light" href="#screenshots">Screenshots</a>
+        <a class="text-decoration-none text-light" href="#video">Demo</a>
+        <a class="text-decoration-none text-light" href="#reviews">Reviews</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Icons
+    lucide.createIcons();
+
+    // Footer year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Screenshot Carousel Injection
+    // Place images at site root as /Screenshot_1.jpg, /Screenshot_2.jpg, ...
+    (function initScreenshots(){
+      const totalScreenshots = 3; // <-- set the count you have
+      const inner = document.getElementById('carouselInner');
+      const indicators = document.getElementById('carouselIndicators');
+      if (!inner) return;
+
+      for (let i = 1; i <= totalScreenshots; i++) {
+        const item = document.createElement('div');
+        item.className = 'carousel-item' + (i === 1 ? ' active' : '');
+
+        const img = document.createElement('img');
+        img.className = 'd-block w-100 screenshot-img';
+        img.alt = `Screenshot ${i}`;
+        img.src = `/Screenshot_${i}.jpg`; // adjust extension if needed (.png/.webp)
+
+        item.appendChild(img);
+        inner.appendChild(item);
+
+        const ind = document.createElement('button');
+        ind.type = 'button';
+        ind.setAttribute('data-bs-target', '#screenshotCarousel');
+        ind.setAttribute('data-bs-slide-to', String(i - 1));
+        ind.className = (i === 1 ? 'active' : '');
+        ind.setAttribute('aria-label', `Screenshot ${i}`);
+        if (i === 1) ind.setAttribute('aria-current', 'true');
+        indicators.appendChild(ind);
+      }
+    })();
+
+    // Smooth scroll for in-page nav (optional enhancement)
+    document.querySelectorAll('a.nav-link[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const id = this.getAttribute('href');
+        const el = document.querySelector(id);
+        if (!el) return;
+        window.scrollTo({
+          top: el.getBoundingClientRect().top + window.pageYOffset - 72,
+          behavior: 'smooth'
+        });
+      });
+    });
+  </script>
+</body>
+</html>

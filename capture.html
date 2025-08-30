@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ProBody Capture</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+    --bg-color: rgba(18, 18, 18, 0.95);
+    --card-bg: rgba(30, 30, 30, 0.75);
+    --accent-color: #7A4ED9; /* Updated accent for a softer purple */
+    --frosted-bg: rgba(40, 40, 40, 0.45);
+    --text-color: #f5f5f5;
+    --shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+    --blur: blur(14px);
+}
+
+body {
+    background: linear-gradient(145deg, #0f0f0f, #1c1c1c);
+    color: var(--text-color);
+    font-family: "Inter", -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--frosted-bg);
+    backdrop-filter: var(--blur);
+    padding: 14px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    position: sticky;
+    top: 0;
+    z-index: 200;
+}
+
+.top-bar .page-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+}
+
+.counter-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    background: var(--frosted-bg);
+    backdrop-filter: var(--blur);
+    padding: 8px 16px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.top-icons {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.top-icons button {
+    background: var(--frosted-bg);
+    backdrop-filter: var(--blur);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-color);
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.top-icons button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.08);
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #e63946;
+    color: var(--text-color);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+#cameraContainer {
+    position: relative;
+    width: 92%;
+    max-width: 520px;
+    margin: 24px auto;
+    aspect-ratio: 3 / 4;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+#video,
+#overlay {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0.25;
+    pointer-events: none;
+}
+
+.dropdown {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.dropdown-toggle {
+    background: var(--frosted-bg) !important;
+    backdrop-filter: var(--blur);
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: var(--text-color) !important;
+    padding: 10px 18px;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.dropdown-toggle:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    transform: scale(1.03);
+}
+
+.dropdown-menu {
+    background: var(--frosted-bg);
+    backdrop-filter: var(--blur);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+}
+
+.dropdown-item {
+    color: var(--text-color);
+    font-size: 0.95rem;
+    padding: 10px 18px;
+    transition: all 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.control-bar {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 18px;
+    z-index: 100;
+    background: var(--frosted-bg);
+    backdrop-filter: var(--blur);
+    padding: 12px 24px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.control-bar button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-light {
+    background: var(--frosted-bg) !important;
+    backdrop-filter: var(--blur);
+    color: var(--text-color);
+    width: 58px;
+    height: 58px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.btn-light:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    transform: scale(1.08);
+}
+
+.btn-danger {
+    background: var(--accent-color) !important;
+    width: 72px;
+    height: 72px;
+    box-shadow: 0 6px 20px rgba(122, 78, 217, 0.45);
+}
+
+.btn-danger:hover {
+    background: #8b5cf6 !important;
+    transform: scale(1.08);
+}
+
+#timerLabel {
+    position: absolute;
+    font-size: 0.8rem;
+    bottom: 6px;
+    color: var(--text-color);
+}
+
+#countdown {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 84px;
+    font-weight: 800;
+    color: var(--text-color);
+    text-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+    z-index: 9999;
+    animation: pulse 0.9s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.12); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+.preview-modal {
+    background: var(--frosted-bg) !important;
+    backdrop-filter: var(--blur);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+}
+
+.preview-modal img {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.modal-footer button {
+    border-radius: 14px;
+    padding: 10px 24px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary {
+    background: var(--frosted-bg) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: var(--text-color) !important;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    transform: scale(1.03);
+}
+
+.btn-success {
+    background: var(--accent-color) !important;
+    border: none !important;
+}
+
+.btn-success:hover {
+    background: #8b5cf6 !important;
+    transform: scale(1.03);
+}
+
+#canvas {
+    display: none;
+}
+
+.notification-bar {
+    position: fixed;
+    right: -320px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 320px;
+    max-height: 85vh;
+    background: var(--frosted-bg);
+    backdrop-filter: var(--blur);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    padding: 24px;
+    z-index: 300;
+    transition: right 0.35s ease;
+    overflow-y: auto;
+    box-shadow: var(--shadow);
+}
+
+.notification-bar.active {
+    right: 10px;
+}
+
+.notification-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.notification-header h3 {
+    font-size: 1.25rem;
+    margin: 0;
+    font-weight: 600;
+}
+
+.toggle-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--text-color);
+}
+
+.notification-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px 0;
+}
+
+.notification {
+    background: rgba(255, 255, 255, 0.06);
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    cursor: pointer;
+}
+
+.notification-content {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+}
+
+.notification-image {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.notification strong {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.notification p {
+    margin: 4px 0 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.notification-link {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-top: 6px;
+    display: inline-block;
+}
+
+.notification-link:hover {
+    text-decoration: underline;
+}
+
+.notification.info {
+    border-left: 4px solid #2b8a3e;
+}
+
+.notification.error {
+    border-left: 4px solid #e63946;
+}
+
+.notification.success {
+    border-left: 4px solid #40c057;
+}
+
+.notification .close-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0;
+    margin-left: 10px;
+}
+
+@media (max-width: 576px) {
+    .notification-bar {
+        width: 85%;
+        max-width: 300px;
+        right: -300px;
+    }
+
+    .notification-image {
+        width: 32px;
+        height: 32px;
+    }
+
+    .notification strong {
+        font-size: 0.95rem;
+    }
+
+    .notification p {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 576px) {
+    #cameraContainer {
+        width: 96%;
+        border-radius: 18px;
+    }
+
+    .top-bar {
+        padding: 12px 18px;
+    }
+
+    .top-bar .page-title {
+        font-size: 1.4rem;
+    }
+
+    .counter-badge {
+        font-size: 0.85rem;
+        padding: 6px 14px;
+    }
+
+    .control-bar {
+        gap: 14px;
+        padding: 10px 20px;
+    }
+
+    .btn-light {
+        width: 52px;
+        height: 52px;
+    }
+
+    .btn-danger {
+        width: 66px;
+        height: 66px;
+    }
+
+    #countdown {
+        font-size: 64px;
+    }
+
+    .notification-bar {
+        width: 85%;
+        max-width: 300px;
+        right: -300px;
+    }
+}
+  </style>
+
+</head>
+<body>
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <h2 class="page-title">
+      ProBody
+      <span id="globalCounter" class="counter-badge">
+        <i data-lucide="globe"></i>
+        <span id="globalCount">0</span> worldwide
+      </span>
+    </h2>
+    <div class="top-icons">
+      <button id="flashBtn" class="flash-btn" onclick="toggleFlash()" title="Toggle Flash">
+        <i data-lucide="zap"></i>
+      </button>
+      <button id="notificationToggle" class="notification-toggle" onclick="toggleNotificationBar()" title="Notifications">
+        <i data-lucide="bell"></i>
+        <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Camera -->
+  <div id="cameraContainer">
+    <video id="video" autoplay playsinline></video>
+    <img id="overlay" alt="overlay" />
+  </div>
+  <canvas id="canvas"></canvas>
+
+  <!-- Tag Selector -->
+  <div class="dropdown mt-3 text-center">
+    <button class="btn dropdown-toggle" type="button" id="tagMenu" data-bs-toggle="dropdown">
+      <i data-lucide="tag"></i> Front
+    </button>
+    <ul class="dropdown-menu">
+      <li><a class="dropdown-item" href="#" onclick="setTag('Front')">Front</a></li>
+      <li><a class="dropdown-item" href="#" onclick="setTag('Back')">Back</a></li>
+      <li><a class="dropdown-item" href="#" onclick="setTag('Side')">Side</a></li>
+    </ul>
+    <input type="hidden" id="tagSelector" value="Front" />
+  </div>
+
+  <!-- Control Bar -->
+  <div class="control-bar">
+    <button class="btn btn-light" onclick="toggleCamera()" title="Switch Camera">
+      <i data-lucide="refresh-ccw" style="width: 22px; height: 22px;"></i>
+    </button>
+    <button class="btn btn-danger shadow-lg" onclick="takePhoto()" title="Capture">
+      <i data-lucide="camera" style="width: 26px; height: 26px;"></i>
+    </button>
+    <button class="btn btn-light" id="timerButton" onclick="cycleTimer()" title="Timer">
+      <i data-lucide="clock" style="width: 22px; height: 22px;"></i>
+      <span id="timerLabel">0s</span>
+    </button>
+  </div>
+
+  <!-- Countdown -->
+  <div id="countdown" style="display:none;"></div>
+
+<!-- Notification Bar -->
+<div class="notification-bar" id="notificationBar">
+    <div class="notification-header">
+        <h3>Notifications</h3>
+        <button class="toggle-btn" onclick="toggleNotificationBar()">&#9776;</button>
+    </div>
+    <div class="notification-list" id="notificationList"></div>
+</div>
+
+  <!-- Preview Modal -->
+  <div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-dark text-light preview-modal">
+        <div class="modal-body text-center">
+          <img id="previewImage" src="" alt="Captured photo" />
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Retake</button>
+          <button class="btn btn-success" onclick="savePhoto()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let currentStream, currentTrack;
+let useFrontCamera = true;
+let torchEnabled = false;
+let capturedData, capturedTag;
+let notificationCount = 0;
+let globalCaptureCount = 0;
+
+const demoOverlays = {
+    Front: "/front.png",
+    Back: "/back.png",
+    Side: "/1side.png"
+};
+
+const timerOptions = [0, 3, 5, 10];
+let timerIndex = 0;
+let selectedTimer = timerOptions[timerIndex];
+let timerCountdown;
+
+$(document).ready(() => {
+    startCamera();
+    setTag("Front");
+    lucide.createIcons();
+    loadNotificationsFromJson();
+    loadGlobalCaptureCount();
+    updateGlobalCountDisplay();
+});
+
+async function loadNotificationsFromJson() {
+    try {
+        const response = await fetch('/notification.json');
+        const notifications = await response.json();
+        notifications
+            .sort((a, b) => b.priority - a.priority) // Sort by priority (5 to 1)
+            .forEach(({ title, description, image, link, priority }) => {
+                addNotification({ title, description, image, link }, priority);
+            });
+    } catch (err) {
+        addNotification({ title: "Error", description: "Failed to load notifications: " + err.message }, "error");
+    }
+}
+
+async function startCamera() {
+    try {
+        if (currentStream) currentStream.getTracks().forEach(t => t.stop());
+        currentStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: useFrontCamera ? "user" : "environment" }
+        });
+        $("#video")[0].srcObject = currentStream;
+        currentTrack = currentStream.getVideoTracks()[0];
+    } catch (err) {
+        addNotification({ title: "Camera Error", description: "Camera access failed: " + err.message }, "error");
+    }
+}
+
+function toggleCamera() {
+    useFrontCamera = !useFrontCamera;
+    startCamera();
+}
+
+async function toggleFlash() {
+    if (!currentTrack) return addNotification({ title: "Flash Error", description: "No camera track available." }, "error");
+    try {
+        const caps = currentTrack.getCapabilities();
+        if (!caps.torch) return addNotification({ title: "Flash Error", description: "Flash not supported." }, "error");
+        torchEnabled = !torchEnabled;
+        await currentTrack.applyConstraints({ advanced: [{ torch: torchEnabled }] });
+    } catch (err) {
+        addNotification({ title: "Flash Error", description: "Flash toggle failed: " + err.message }, "error");
+    }
+}
+
+function cycleTimer() {
+    timerIndex = (timerIndex + 1) % timerOptions.length;
+    selectedTimer = timerOptions[timerIndex];
+    $("#timerLabel").text(selectedTimer + "s");
+}
+
+function takePhoto() {
+    if (selectedTimer > 0) {
+        let remaining = selectedTimer;
+        showCountdown(remaining);
+        timerCountdown = setInterval(() => {
+            remaining--;
+            if (remaining > 0) {
+                showCountdown(remaining);
+            } else {
+                clearInterval(timerCountdown);
+                hideCountdown();
+                captureNow();
+            }
+        }, 1000);
+    } else {
+        captureNow();
+    }
+}
+
+function showCountdown(seconds) {
+    $("#countdown").text(seconds).show();
+}
+
+function hideCountdown() {
+    $("#countdown").hide();
+}
+
+function setTag(tag) {
+    $("#tagSelector").val(tag);
+    $("#tagMenu").html(`<i data-lucide="tag"></i> ${tag}`);
+    lucide.createIcons();
+    loadLastOverlay(tag);
+}
+
+function loadLastOverlay(tag) {
+    const lastPhoto = localStorage.getItem(`lastPhoto_${tag}`);
+    $("#overlay").attr("src", lastPhoto || demoOverlays[tag] || "");
+}
+
+function captureNow() {
+    try {
+        navigator.vibrate?.(100);
+        const tag = $("#tagSelector").val();
+        const d = new Date();
+        const filename = `ProBody_${tag}_${d.getDate()}${d.getMonth() + 1}${d.getFullYear()}_${d.getHours()}${d.getMinutes()}${d.getSeconds()}.png`;
+
+        const video = $("#video")[0];
+        const canvas = $("#canvas")[0];
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+
+        // Draw video frame
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Apply image enhancements
+        // Brightness/Contrast adjustment
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            // Increase brightness (+10) and contrast (1.1x)
+            data[i] = Math.min(255, data[i] * 1.1 + 10); // Red
+            data[i + 1] = Math.min(255, data[i + 1] * 1.1 + 10); // Green
+            data[i + 2] = Math.min(255, data[i + 2] * 1.1 + 10); // Blue
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        // Apply subtle vignette effect
+        const gradient = ctx.createRadialGradient(
+            canvas.width / 2, canvas.height / 2, 0,
+            canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height) / 2
+        );
+        gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+        gradient.addColorStop(1, "rgba(0, 0, 0, 0.3)");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw "ProBody" text at the top-left with shadow
+        ctx.font = `bold ${Math.floor(canvas.width / 20)}px Inter, sans-serif`; // Larger, bold font
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)"; // Slightly more opaque
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+        ctx.shadowColor = "rgba(0, 0, 0, 0.5)"; // Subtle shadow
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.fillText("ProBody", 20, 40); // Adjusted y for better spacing
+        ctx.shadowBlur = 0; // Reset shadow
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Draw tag badge to the right of "ProBody"
+        const tagMap = {
+            "front": "F",
+            "back": "B",
+            "side": "S"
+            // Add more mappings as needed
+        };
+        const displayTag = tagMap[tag.toLowerCase()] || tag.charAt(0).toUpperCase(); // Fallback to first letter
+        const textWidth = ctx.measureText("ProBody").width;
+        const badgeX = 20 + textWidth + 15; // 15px gap for cleaner spacing
+        const badgeY = 40; // Align with "ProBody" text
+        const badgeWidth = Math.floor(canvas.width / 20); // Slightly larger badge
+        const badgeHeight = Math.floor(canvas.width / 25); // Adjusted for rounded rectangle
+
+        // Draw badge with gradient background
+        const gradientBadge = ctx.createLinearGradient(badgeX, badgeY - badgeHeight / 2, badgeX, badgeY + badgeHeight / 2);
+        gradientBadge.addColorStop(0, "rgba(50, 50, 50, 0.9)");
+        gradientBadge.addColorStop(1, "rgba(20, 20, 20, 0.9)");
+        ctx.fillStyle = gradientBadge;
+        ctx.beginPath();
+        ctx.roundRect(badgeX, badgeY - badgeHeight / 2, badgeWidth, badgeHeight, 5); // Rounded rectangle
+        ctx.fill();
+
+        // Draw tag letter inside badge
+        ctx.font = `bold ${Math.floor(canvas.width / 25)}px Inter, sans-serif`; // Bold, slightly larger
+        ctx.fillStyle = "rgba(255, 255, 255, 1)"; // Fully opaque white for contrast
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(displayTag, badgeX + badgeWidth / 2, badgeY);
+
+        // Add date at the bottom with background rectangle
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const formattedDate = `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+        ctx.font = `bold ${Math.floor(canvas.width / 25)}px Inter, sans-serif`;
+        const dateWidth = ctx.measureText(formattedDate).width;
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; // Semi-transparent background
+        ctx.beginPath();
+        ctx.roundRect(15, canvas.height - 30, dateWidth + 10, 20, 5); // Background for date
+        ctx.fill();
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+        ctx.fillText(formattedDate, 20, canvas.height - 15); // Adjusted for background
+
+        // Finalize capture
+        capturedData = { img: canvas.toDataURL("image/png"), filename };
+        capturedTag = tag;
+        $("#previewImage").attr("src", capturedData.img);
+        new bootstrap.Modal($("#previewModal")).show();
+    } catch (err) {
+        addNotification({ title: "Capture Error", description: "Capture failed: " + err.message }, "error");
+    }
+}
+
+async function savePhoto() {
+    if (!capturedData) return;
+    const blob = dataURLtoBlob(capturedData.img);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = capturedData.filename;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    localStorage.setItem(`lastPhoto_${capturedTag}`, capturedData.img);
+    bootstrap.Modal.getInstance($("#previewModal")[0]).hide();
+    loadLastOverlay(capturedTag);
+    addNotification({ title: "Success", description: "Photo saved successfully!" }, "success");
+    updateGlobalCaptureCount();
+}
+
+function dataURLtoBlob(dataURL) {
+    const parts = dataURL.split(",");
+    const mime = parts[0].match(/:(.*?);/)[1];
+    const binary = atob(parts[1]);
+    const array = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
+    return new Blob([array], { type: mime });
+}
+
+function toggleNotificationBar() {
+    $("#notificationBar").toggleClass("active");
+    if ($("#notificationBar").hasClass("active")) {
+        notificationCount = 0;
+        updateNotificationBadge();
+    }
+}
+
+function addNotification({ title, description, image, link }, type = "info") {
+    const notificationId = `notif-${Date.now()}`;
+    const notification = `
+        <div class="notification ${type}" id="${notificationId}" onclick="removeNotification('${notificationId}')">
+            <div class="notification-content">
+                ${image ? `<img src="${image}" alt="${title}" class="notification-image">` : ""}
+                <div>
+                    <strong>${title}</strong>
+                    <p>${description}</p>
+                    ${link ? `<a href="${link}" target="_blank" class="notification-link">Learn More</a>` : ""}
+                </div>
+            </div>
+            <button class="close-btn" onclick="removeNotification('${notificationId}')">&times;</button>
+        </div>
+    `;
+    $("#notificationList").prepend(notification);
+    notificationCount++;
+    updateNotificationBadge();
+}
+
+function removeNotification(id) {
+    $(`#${id}`).fadeOut(0, function() {
+        $(this).remove();
+        notificationCount--;
+        updateNotificationBadge();
+        if ($("#notificationList").children().length === 0) {
+            $("#notificationBar").removeClass("active");
+        }
+    });
+}
+
+function updateNotificationBadge() {
+    const badge = $("#notificationBadge");
+    if (notificationCount > 0) {
+        badge.text(notificationCount).show();
+    } else {
+        badge.hide();
+    }
+}
+
+async function loadGlobalCaptureCount() {
+    try {
+        const response = await fetch('/count.json');
+        const data = await response.json();
+        const count = data.count || 0;
+        $("#globalCount").text(count); // Set count directly to textview
+        addNotification({
+            title: "Global Capture Count",
+            description: `${count} images have been clicked worldwide.`,
+            image: "",
+            link: ""
+        }, "info");
+    } catch (err) {
+        addNotification({ title: "Error", description: "Failed to load capture count: " + err.message }, "error");
+    }
+}
+
+async function updateGlobalCaptureCount() {
+    try {
+        const $globalCount = $("#globalCount");
+        let count = parseInt($globalCount.text()) || 0; // Read count from textview
+        count++;
+        $globalCount.text(count); // Update textview
+        await fetch('/update.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ count })
+        });
+        addNotification({
+            title: "Capture Recorded",
+            description: `${count} images clicked worldwide.`,
+            image: "",
+            link: ""
+        }, "success");
+    } catch (err) {
+        addNotification({ title: "Error", description: "Failed to update capture count: " + err.message }, "error");
+    }
+}
+
+function updateGlobalCountDisplay() {
+    const $globalCount = $("#globalCount");
+    if ($globalCount.length) {
+        const count = parseInt($globalCount.text()) || 0; // Read count from textview
+        $globalCount.text(count); // Ensure textview shows only the number
+    }
+}
+  </script>
+</body>
+</html>
