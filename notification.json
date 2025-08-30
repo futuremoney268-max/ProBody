@@ -2,15 +2,15 @@
     {
         "title": "Welcome to ProBody",
         "description": "Start capturing your progress today!",
-        "image": "/Logo.png",
-        "link": "/index.html",
+        "image": "./Logo.png",
+        "link": "./index.html",
         "priority": 5
     },
     {
         "title": "New Feature",
         "description": "Check out our latest timer options.",
-        "image": "/Logo.png",
-        "link": "/index.html",
+        "image": "./Logo.png",
+        "link": "./index.html",
         "priority": 3
     }
     ]
