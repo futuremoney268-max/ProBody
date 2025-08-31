@@ -111,6 +111,7 @@
               email: user.email,
               photoURL: user.photoURL,
               uid: user.uid,
+              premium: false,
               joiningDate: firebase.database.ServerValue.TIMESTAMP,
               userType: "standard",
               uploadCredits: 1, // Free credit
@@ -153,7 +154,7 @@
 
     enterAppBtn.addEventListener('click', () => {
         // IMPORTANT: Adjust this path to your main app file
-        window.location.href = './assistant/Demo.html'; 
+        window.location.href = './assistant/music.html'; 
     });
 
     signOutBtn.addEventListener('click', () => {
