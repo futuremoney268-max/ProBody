@@ -1252,3 +1252,64 @@ function updateTrainingProgress(joiningday) {
     $('#gymStatus').text(`You've trained for ${totalDays} day${totalDays > 1 ? 's' : ''} since joining!`);
 }
 
+const fab = document.getElementById('musicFab');
+const sheetWrapper = document.getElementById('musicSheetWrapper');
+const sheet = document.getElementById('musicSheet');
+const frame = document.getElementById('musicFrame');
+const closeBtn = document.getElementById('closeSheetBtn');
+
+const PEAK_HEIGHT = 80; // bottom peek height
+const EXPANDED_HEIGHT = 0; // fully expanded (top)
+
+let startY = 0;
+let currentY = 0;
+let isDragging = false;
+let isExpanded = false;
+
+// Open bottom sheet (on first click)
+fab.addEventListener('click', () => {
+  frame.src = "music.html";
+  sheetWrapper.classList.add('active');
+  sheet.style.transform = `translateY(calc(100% - ${PEAK_HEIGHT}px))`;
+});
+
+// Optional: hide overlay but keep sheet visible
+closeBtn.addEventListener('click', () => {
+  sheetWrapper.style.opacity = '0';
+  setTimeout(() => { sheetWrapper.style.visibility = 'hidden'; }, 300);
+});
+
+// --- Drag & slide behavior ---
+sheet.addEventListener('touchstart', (e) => {
+  startY = e.touches[0].clientY;
+  isDragging = true;
+  sheet.style.transition = 'none';
+});
+
+sheet.addEventListener('touchmove', (e) => {
+  if (!isDragging) return;
+  currentY = e.touches[0].clientY;
+  let deltaY = currentY - startY;
+
+  let sheetHeight = isExpanded ? EXPANDED_HEIGHT : window.innerHeight - PEAK_HEIGHT;
+  let translate = Math.min(Math.max(deltaY + sheetHeight, EXPANDED_HEIGHT), window.innerHeight - PEAK_HEIGHT);
+  sheet.style.transform = `translateY(${translate}px)`;
+});
+
+sheet.addEventListener('touchend', () => {
+  isDragging = false;
+  sheet.style.transition = 'transform 0.3s ease';
+
+  let deltaY = currentY - startY;
+  // Determine final state: expand if dragged up, collapse to peek if dragged down
+  if (deltaY < -50) {
+    sheet.style.transform = `translateY(${EXPANDED_HEIGHT}px)`;
+    isExpanded = true;
+  } else if (deltaY > 50) {
+    sheet.style.transform = `translateY(calc(100% - ${PEAK_HEIGHT}px))`;
+    isExpanded = false;
+  } else {
+    // small drag, snap back to previous state
+    sheet.style.transform = isExpanded ? `translateY(${EXPANDED_HEIGHT}px)` : `translateY(calc(100% - ${PEAK_HEIGHT}px))`;
+  }
+});

@@ -480,3 +480,28 @@ footer a:hover {
   font-size: 1rem;
   line-height: 1.5;
 }
+
+/* FAB */
+.fab {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  background: #1DB954;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  z-index: 1100;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4), 0 0 20px rgba(29,185,84,0.35);
+}
+.fab:hover {
+  transform: scale(1.12) translateY(-3px);
+  box-shadow: 0 10px 35px rgba(0,0,0,0.5), 0 0 25px rgba(29,185,84,0.6);
+}

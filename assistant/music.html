@@ -3,474 +3,883 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Music Party Sync</title>
-    <!-- Bootstrap 5 Light Theme -->
+    <meta name="description" content="Music Party Cloud - Sync your music and vibe together anywhere.">
+    <meta name="og:title" content="Music Party Cloud">
+    <meta name="og:description" content="Sync your music and vibe together anywhere.">
+    <meta name="og:image" content="https://your-site.com/favicon.png">
+    <link rel="icon" type="image/png" href="https://your-site.com/favicon.png">
+    <title>Music Party Cloud</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            background-color: #f8f9fa;
-            color: #212529;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
-        .screen {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-            box-sizing: border-box;
-            padding-bottom: 100px; /* Space for the bottom bar */
-        }
-        #welcome-screen .card {
-            background-color: #ffffff;
-            border: 1px solid #dee2e6;
-        }
-        #welcome-screen .btn-action {
-            width: 100%;
-            padding: 12px;
-            font-size: 1.1rem;
-        }
-        .player-container {
-            width: 100%;
-            max-width: 450px;
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            border: 1px solid #dee2e6;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        #audioVisualizer {
-            width: 100%;
-            height: auto;
-            aspect-ratio: 1 / 1;
-            background-color: #212529;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .song-title {
-            font-size: 24px; font-weight: 600; margin: 10px 0 5px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .artist { font-size: 16px; color: #6c757d; margin-bottom: 20px; }
-        #playlist li.active { background-color: #1DB954; color: #fff; border-color: #1DB954; }
-        #playlist li { cursor: pointer; display: flex; align-items: center; }
-        .player-controls button:hover {
-            color: #1DB954;
-            transform: scale(1.1);
-        }
-        .action-bar {
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-        }
-        #log-popup-content {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.8rem;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-        #log-popup-content div {
-            padding: 3px 5px;
-            border-bottom: 1px solid #dee2e6;
-        }
-        #log-popup-content div:last-child { border-bottom: none; }
-    </style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+    
+    :root {
+        --brand-color: #1DB954;
+        --brand-color-glow: rgba(29, 185, 84, 0.4);
+        --bg-color-start: #0f2027;
+        --bg-color-mid: #203a43;
+        --bg-color-end: #2c5364;
+        --text-color: #ffffff;
+        --text-color-muted: rgba(255, 255, 255, 0.7);
+        --card-bg: rgba(0, 0, 0, 0.3);
+        --card-border: rgba(255, 255, 255, 0.15);
+    }
+
+    html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, var(--bg-color-start), var(--bg-color-mid), var(--bg-color-end));
+        background-size: 400% 400%;
+        animation: gradientBG 18s ease infinite;
+        color: var(--text-color);
+        min-height: 100vh;
+        margin: 0;
+        overflow: hidden;
+    }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    @media (prefers-reduced-motion: reduce) { body, .btn, .welcome-card, #album-art-main { animation: none; transition: none; } }
+
+    #album-art-bg {
+        position: fixed; top: -5%; left: -5%; width: 110%; height: 110%;
+        background-size: cover; background-position: center;
+        filter: blur(30px) brightness(0.6);
+        opacity: 0; transition: background-image 0.8s ease-in-out, opacity 0.8s ease-in-out;
+        z-index: -1;
+    }
+    body.has-album-art #album-art-bg { opacity: 1; }
+
+    .screen {
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        min-height: 100vh; width: 100%; padding: 1.5rem;
+        position: absolute; top: 0; left: 0;
+        opacity: 0; visibility: hidden;
+        transition: opacity 0.6s ease, visibility 0.6s;
+    }
+    .screen.active { opacity: 1; visibility: visible; }
+
+    /* --- Welcome Screen --- */
+    .welcome-card {
+        background: var(--card-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-radius: 1.5rem; border: 1px solid var(--card-border);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        padding: 2rem; width: 100%; max-width: 480px;
+        transition: transform 0.3s ease;
+    }
+    .welcome-card:hover { transform: translateY(-5px); }
+
+    .btn-brand {
+        background-color: var(--brand-color); border: none; padding: 0.75rem 1.5rem;
+        font-weight: 600; border-radius: 2rem;
+        transition: all 0.3s ease; box-shadow: 0 4px 15px var(--brand-color-glow);
+    }
+    .btn-brand:hover { background-color: #1ed760; transform: translateY(-2px); box-shadow: 0 6px 20px var(--brand-color-glow); }
+    .btn-brand:active { transform: scale(0.95); }
+
+    .welcome-card .form-control {
+        background: rgba(255, 255, 255, 0.1); border: 1px solid var(--card-border);
+        color: var(--text-color); border-radius: 0.75rem; padding: 0.75rem;
+    }
+    .welcome-card .form-control:focus { background: rgba(255, 255, 255, 0.15); border-color: var(--brand-color); box-shadow: 0 0 0 3px var(--brand-color-glow); }
+
+    /* --- Player Screen --- */
+    .player-fullscreen-container {
+        width: 100%; max-width: 800px; margin: 0 auto;
+        display: flex; flex-direction: column; justify-content: space-between;
+        height: 100%; padding: 2rem 1rem;
+    }
+
+    #album-art-main {
+        width: clamp(200px, 40vw, 360px); height: clamp(200px, 40vw, 360px);
+        background: rgba(0, 0, 0, 0.2); border-radius: 1rem; border: 1px solid var(--card-border);
+        margin: 0 auto 2rem; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        background-size: cover; background-position: center; transition: all 0.5s ease;
+    }
+    body.has-album-art #album-art-main { box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 20px var(--brand-color-glow); }
+    #album-art-main .bi { font-size: 5rem; color: var(--text-color-muted); }
+
+    #current-song-title { font-size: clamp(1.5rem, 3.5vw, 2.5rem); font-weight: 700; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); margin-bottom: 0.5rem; }
+    #current-song-artist { font-size: clamp(0.9rem, 2vw, 1.1rem); font-weight: 400; color: var(--text-color-muted); }
+
+    /* Player Actions */
+#player-actions {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+#player-actions .user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    color: var(--text-color);
+    margin-left: 0.5rem;
+}
+
+#player-actions .user-name {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+#player-actions .guest-count-container {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-color-muted);
+}
+
+#player-actions .action-buttons {
+    display: flex;
+    gap: 0.75rem;
+}
+
+#player-actions .btn {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+#player-actions .btn:hover {
+    background: var(--brand-color);
+    border-color: var(--brand-color);
+    transform: scale(1.05);
+}
+
+#player-actions .btn:active {
+    transform: scale(0.95);
+}
+
+/* Info Bar */
+#info-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+    padding: 0.5rem 1rem;
+    background: var(--card-bg);
+    border-radius: 0.75rem;
+    border: 1px solid var(--card-border);
+}
+
+.room-id-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-color-muted);
+}
+
+.copy-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+.copy-btn:hover {
+    color: var(--brand-color);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 576px) {
+    #player-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    #player-actions .user-info {
+        align-items: flex-start;
+    }
+
+    #player-actions .action-buttons {
+        align-self: flex-start;
+    }
+
+    #info-bar {
+        justify-content: flex-start;
+    }
+}
+    .room-id-container { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-color-muted); }
+    .copy-btn { background: none; border: none; color: var(--text-color); cursor: pointer; padding: 0; font-size: 1rem; transition: color 0.3s ease; }
+    .copy-btn:hover { color: var(--brand-color); }
+
+    /* Player Controls */
+    .player-controls { display: flex; justify-content: center; align-items: center; gap: 1.5rem; margin-top: 1.5rem; }
+    .player-controls .btn {
+        color: var(--text-color); background: rgba(255, 255, 255, 0.1); border: none;
+        border-radius: 50%; width: 60px; height: 60px;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.3s ease;
+    }
+    .player-controls .btn:hover { background: var(--brand-color); transform: scale(1.05); }
+    .player-controls .btn:active { transform: scale(0.95); }
+    #playPauseBtn { font-size: 2.5rem; width: 80px; height: 80px; }
+    #prevBtn, #nextBtn { font-size: 1.8rem; }
+
+    /* Seek Bar */
+    #seekBar { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: rgba(255, 255, 255, 0.2); border-radius: 3px; outline: none; }
+    #seekBar::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; background: var(--brand-color); border-radius: 50%; cursor: pointer; box-shadow: 0 0 8px rgba(0, 0, 0, 0.3); transition: all 0.2s ease; }
+    #seekBar:hover::-webkit-slider-thumb { background: #1ed760; transform: scale(1.1); }
+    #seekBar::-moz-range-thumb { width: 16px; height: 16px; background: var(--brand-color); border-radius: 50%; cursor: pointer; border: none; transition: all 0.2s ease; }
+    #seekBar:hover::-moz-range-thumb { background: #1ed760; transform: scale(1.1); }
+
+    /* Connection Overlay & Loader */
+    #connection-overlay {
+        position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        backdrop-filter: blur(10px); background: rgba(0, 0, 0, 0.7);
+        transition: opacity 0.5s ease, visibility 0.5s; z-index: 1000;
+    }
+    .loader { display: flex; gap: 0.5rem; }
+    .loader span { width: 12px; height: 12px; background: var(--brand-color); border-radius: 50%; animation: bounce 1.2s infinite ease-in-out; }
+    .loader span:nth-child(2) { animation-delay: -0.4s; }
+    .loader span:nth-child(3) { animation-delay: -0.2s; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+    /* Modals */
+    .modal-content { background: #1a1a1a; border-radius: 1rem; border: 1px solid var(--card-border); color: var(--text-color); }
+    .modal-header, .modal-footer { border-color: var(--card-border); }
+/* --- Library Modal Tab Styling --- */
+#libraryModal .nav-tabs {
+    border-bottom: 1px solid var(--card-border);
+}
+#libraryModal .nav-link {
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-color-muted);
+    transition: all 0.2s ease-in-out;
+}
+#libraryModal .nav-link:hover {
+    color: var(--text-color);
+}
+#libraryModal .nav-link.active {
+    background: transparent;
+    color: var(--brand-color);
+    border-bottom-color: var(--brand-color);
+}
+    /* Responsive */
+    @media (max-width: 576px) {
+        .player-fullscreen-container { padding: 5rem 1rem 2rem 1rem; } /* Add top padding for header */
+        #player-actions { flex-direction: row; align-items: center; }
+        #album-art-main { width: clamp(180px, 55vw, 280px); height: clamp(180px, 55vw, 280px); }
+        #current-song-title { font-size: clamp(1.2rem, 5vw, 1.8rem); }
+    }
+</style>
 </head>
 <body>
-    <div id="app-container">
-        <!-- WELCOME SCREEN -->
-        <div id="welcome-screen" class="screen">
-            <div class="card p-4 p-md-5" style="width: 100%; max-width: 500px;">
-                <div class="card-body text-center">
-                    <i class="bi bi-music-note-beamed" style="font-size: 4rem; color: #1DB954;"></i>
-                    <h2 class="card-title my-3">Welcome to Music Party</h2>
-                    <p class="card-text text-muted mb-4">Sync music with friends in real-time.</p>
-                    <div class="d-grid gap-3"><button id="hostBtn" class="btn btn-success btn-lg btn-action"><i class="bi bi-person-plus-fill me-2"></i>Host a New Party</button></div>
-                    <hr class="my-4">
-                    <h5 class="mb-3">Or Join an Existing Party</h5>
-                    <div class="input-group">
-                        <input type="text" id="roomIdInput" class="form-control" placeholder="Enter Room ID">
-                        <button id="joinBtn" class="btn btn-outline-primary"><i class="bi bi-arrow-right-circle-fill"></i> Join</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div id="album-art-bg"></div>
 
-        <!-- PLAYER SCREEN -->
-        <div id="player-screen" class="screen d-none">
-            <div class="player-container">
-                <div id="info-bar" class="alert alert-secondary text-center p-2 mb-3"></div>
-                <canvas id="audioVisualizer"></canvas>
-                <div id="current-song-title" class="song-title">Select a song</div>
-                <div class="artist">Music Party</div>
-                <audio id="audioPlayer" class="w-100 my-3 d-none" crossOrigin="anonymous"></audio>
-                <div class="player-controls d-flex justify-content-center align-items: center gap-4 mb-4">
-                    <button id="prevBtn" class="btn btn-lg text-dark"><i class="bi bi-skip-start-fill fs-2"></i></button>
-                    <button id="playPauseBtn" class="btn btn-dark rounded-circle" style="width: 65px; height: 65px; font-size: 2.2rem; display: flex; align-items: center; justify-content: center;"><i class="bi bi-play-fill"></i></button>
-                    <button id="nextBtn" class="btn btn-lg text-dark"><i class="bi bi-skip-end-fill fs-2"></i></button>
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="screen active">
+        <div class="welcome-card">
+            <div class="card-body text-center">
+                <i class="bi bi-music-note-beamed" style="font-size: 3.5rem; color: var(--brand-color);"></i>
+                <h2 class="mt-3 fw-bold">Music Party Cloud</h2>
+                <p class="text-white-50">Sync your music, vibe together, anywhere.</p>
+                <div class="d-grid gap-3 my-4">
+                    <button id="hostBtn" class="btn btn-brand btn-lg" aria-label="Host a new music party">
+                        <i class="bi bi-broadcast-pin me-2"></i> Host Party
+                    </button>
                 </div>
-                <ul id="playlist" class="list-group list-group-flush text-start">
-                    <li class="list-group-item" data-title="Tere Jaisa Yaar Kahan" data-url="./Tere jaisa.mp3">Tere Jaisa Yaar Kahan</li>
-                    <li class="list-group-item" data-title="Electronic Rock" data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">SoundHelix Song 2</li>
-                    <li class="list-group-item" data-title="Acoustic Blues" data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">SoundHelix Song 3</li>
-                    <li class="list-group-item" data-title="Jazz Fusion" data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3">SoundHelix Song 4</li>
-                </ul>
-            </div>
-            <div class="action-bar fixed-bottom bg-light p-3">
-                <div class="container d-flex justify-content-between align-items: center" style="max-width: 450px;">
-                    <i class="bi bi-volume-up-fill fs-4 text-muted"></i>
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#logModal"><i class="bi bi-terminal me-2"></i>Console</button>
-                        <button id="leaveBtn" class="btn btn-outline-danger"><i class="bi bi-box-arrow-left me-2"></i>Leave Party</button>
-                    </div>
+                <hr style="border-color: var(--card-border);">
+                <h5 class="mb-3 fw-semibold">Join a Party</h5>
+                <div class="input-group">
+                    <input id="partyIdInput" class="form-control" placeholder="Enter Party ID" aria-label="Party ID">
+                    <button id="joinBtn" class="btn btn-brand" aria-label="Join party with entered ID"><i class="bi bi-arrow-right-circle-fill"></i></button>
                 </div>
+                <ul id="recent-parties" class="list-group mt-3"></ul>
             </div>
         </div>
     </div>
 
-    <!-- LOG MODAL -->
-    <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
+    <!-- Player Screen -->
+    <div id="player-screen" class="screen">
+        <div id="connection-overlay" class="d-none">
+            <div class="loader">
+                <span></span><span></span><span></span>
+            </div>
+            <p id="connection-status" class="mt-3 fs-5">Initializing...</p>
+        </div>
+
+        <div id="player-actions">
+            <div class="user-info">
+                <div id="user-display-name" class="user-name"></div>
+                <div class="guest-count-container">
+                    <i class="bi bi-people-fill me-1"></i>
+                    <span id="guest-count">0</span>
+                </div>
+            </div>
+            <button id="fullscreenBtn" class="btn" aria-label="Toggle fullscreen"><i class="bi bi-fullscreen"></i></button>
+            <button class="btn" data-bs-toggle="modal" data-bs-target="#logModal" aria-label="View event log"><i class="bi bi-terminal"></i></button>
+            <button id="leaveBtn" class="btn btn-danger" aria-label="Leave party"><i class="bi bi-box-arrow-left"></i></button>
+        </div>
+
+        <div class="player-fullscreen-container">
+            <header class="text-center">
+                <div id="info-bar">
+                    <div class="room-id-container">
+                        <span>Party ID:</span>
+                        <strong id="room-id"></strong>
+                        <button class="copy-btn" aria-label="Copy room ID"><i class="bi bi-clipboard"></i></button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="player-main text-center">
+                <div id="album-art-main"><i class="bi bi-music-note"></i></div>
+                <h1 id="current-song-title">Library is Empty</h1>
+                <p id="current-song-artist">Add a song to get started</p>
+            </main>
+
+            <footer class="player-footer">
+                <div class="progress-container w-100 mx-auto" style="max-width: 600px;">
+                    <input type="range" id="seekBar" class="form-range" value="0" min="0" max="100" aria-label="Seek through current track">
+                    <div class="d-flex justify-content-between font-monospace small text-white-50">
+                        <span id="current-time">0:00</span>
+                        <span id="duration">0:00</span>
+                    </div>
+                </div>
+                <div class="player-controls host-only">
+                    <button id="prevBtn" class="btn" aria-label="Previous track"><i class="bi bi-skip-start-fill"></i></button>
+                    <button id="playPauseBtn" class="btn" aria-label="Play or pause current track"><i class="bi bi-play-circle-fill"></i></button>
+                    <button id="nextBtn" class="btn" aria-label="Next track"><i class="bi bi-skip-end-fill"></i></button>
+                </div>
+                <div class="d-flex justify-content-center mt-4">
+                    <button id="manageLibraryBtn" class="btn btn-outline-light rounded-pill host-only" data-bs-toggle="modal" data-bs-target="#libraryModal" aria-label="Manage music library">
+                        <i class="bi bi-music-note-list me-2"></i> Manage Library
+                    </button>
+                </div>
+            </footer>
+        </div>
+        <audio id="audioPlayer" crossorigin="anonymous"></audio>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel">
         <div class="modal-dialog modal-dialog-scrollable modal-lg">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title" id="logModalLabel"><i class="bi bi-terminal me-2"></i>Event Log</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+                <div class="modal-header"><h5 class="modal-title" id="logModalLabel"><i class="bi bi-terminal me-2"></i>Event Log</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div>
                 <div class="modal-body"><div id="log-popup-content"></div></div>
-                <div class="modal-footer">
-                    <button type="button" id="clearLogBtn" class="btn btn-warning">Clear Log</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <div class="modal-footer"><button type="button" id="clearLogBtn" class="btn btn-warning" aria-label="Clear event log">Clear</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
+            </div>
+        </div>
+    </div>
+<!-- MODIFIED & UPGRADED: Library Modal with Tabs -->
+<div class="modal fade" id="libraryModal" tabindex="-1" aria-labelledby="libraryModalLabel">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="libraryModalLabel"><i class="bi bi-music-note-list me-2"></i>My Music Library</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs nav-fill" id="libraryTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="my-songs-tab" data-bs-toggle="tab" data-bs-target="#my-songs-pane" type="button" role="tab" aria-controls="my-songs-pane" aria-selected="true">
+                            <i class="bi bi-collection-play-fill me-2"></i> My Songs
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="add-new-tab" data-bs-toggle="tab" data-bs-target="#add-new-pane" type="button" role="tab" aria-controls="add-new-pane" aria-selected="false">
+                            <i class="bi bi-cloud-arrow-up-fill me-2"></i> Add New
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="libraryTabContent">
+                    <!-- Pane 1: Your Uploaded Songs -->
+                    <div class="tab-pane fade show active" id="my-songs-pane" role="tabpanel" aria-labelledby="my-songs-tab" tabindex="0">
+                        <ul id="library-list" class="list-group list-group-flush mt-3">
+                            <!-- Library items will be dynamically injected here by JS -->
+                        </ul>
+                    </div>
+
+                    <!-- Pane 2: Upload Controls -->
+                    <div class="tab-pane fade" id="add-new-pane" role="tabpanel" aria-labelledby="add-new-tab" tabindex="0">
+                        <div class="p-3">
+                             <div id="upload-progress-container" class="progress mb-3 d-none" role="progressbar">
+                                <div id="upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 0%"></div>
+                            </div>
+                            <div class="d-grid gap-3">
+                                <p class="text-white-50 text-center small">Upload your own MP3 files or add a direct URL to a song.</p>
+                                <label for="songFileInput" id="uploadBtnLabel" class="btn btn-brand">
+                                    <i class="bi bi-upload me-2"></i> Upload MP3 File
+                                </label>
+                                <input type="file" id="songFileInput" accept="audio/mpeg" class="d-none">
+                                
+                                <div class="input-group">
+                                    <input type="url" id="customSongUrlInput" class="form-control" placeholder="Enter custom MP3 URL" aria-label="Custom MP3 URL">
+                                    <button id="addCustomUrlBtn" class="btn btn-outline-success" aria-label="Add custom MP3 URL"><i class="bi bi-plus-circle-fill"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
+</div>     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- DOM & STATE ---
+        const welcomeScreen = document.getElementById("welcome-screen"),
+              playerScreen = document.getElementById("player-screen"),
+              audio = document.getElementById("audioPlayer"),
+              songTitleEl = document.getElementById("current-song-title"),
+              artistEl = document.getElementById("current-song-artist"),
+              albumArtBg = document.getElementById('album-art-bg'),
+              albumArtMain = document.getElementById('album-art-main'),
+              infoBar = document.getElementById("info-bar"),
+              playPauseBtn = document.getElementById("playPauseBtn"),
+              prevBtn = document.getElementById("prevBtn"),
+              nextBtn = document.getElementById("nextBtn"),
+              connectionOverlay = document.getElementById('connection-overlay'),
+              connectionStatus = document.getElementById('connection-status'),
+              logPopupContent = document.getElementById('log-popup-content'),
+              seekBar = document.getElementById('seekBar'),
+              currentTimeEl = document.getElementById('current-time'),
+              durationEl = document.getElementById('duration'),
+              libraryListEl = document.getElementById('library-list'),
+              userNameEl = document.getElementById('user-name'),
+              hostBtn = document.getElementById('hostBtn'),
+              addCustomUrlBtn = document.getElementById('addCustomUrlBtn'),
+              customSongUrlInput = document.getElementById('customSongUrlInput'),
+              recentPartiesList = document.getElementById('recent-parties'),
+              fullscreenBtn = document.getElementById('fullscreenBtn');
+        let isHost = false, partyRef, libraryRef, currentTrackIndex = 0;
+        let deviceId, currentUser, userData = { displayName: '' };
+        let playlistItems = [], lastKnownState = null, userInteracted = false;
+        let guestCount = 0;
+        const SESSION_KEY = 'musicPartySession';
+        const RECENT_PARTIES_KEY = 'recentParties';
 
-<script>
-    // --- DOM ELEMENTS & STATE ---
-    const welcomeScreen = document.getElementById('welcome-screen');
-    const playerScreen = document.getElementById('player-screen');
-    const audio = document.getElementById('audioPlayer');
-    const playlistEl = document.getElementById('playlist');
-    const infoBar = document.getElementById('info-bar');
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const songTitleEl = document.getElementById('current-song-title');
-    const logPopupContent = document.getElementById('log-popup-content');
-    const playIcon = '<i class="bi bi-play-fill"></i>';
-    const pauseIcon = '<i class="bi bi-pause-fill"></i>';
-    let isHost = false;
-    let roomRef;
-    let guestConnections = {}; // Stores { guestId: RTCPeerConnection }
-    let guestChannels = [];
-    const SESSION_STORAGE_KEY = 'musicPartySession';
-    const canvas = document.getElementById('audioVisualizer');
-    const canvasCtx = canvas.getContext('2d');
-    let audioContext, analyser, source, dataArray;
-    let visualizerInitialized = false;
-    let currentTrackIndex = 0;
-    const playlistItems = document.querySelectorAll('#playlist li');
+        let peerConnection, dataChannel;
+        const iceConfiguration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-    // --- CONFIGURATION ---
-    const firebaseConfig = {"apiKey":"AIzaSyDyq1nxDtx80s4PxyGgO8iRAhfX5f0Hg0M","authDomain":"ngoaa-1581992169924.firebaseapp.com","databaseURL":"https://ngoaa-1581992169924.firebaseio.com","projectId":"ngoaa-1581992169924","storageBucket":"ngoaa-1581992169924.appspot.com","messagingSenderId":"714601884037","appId":"1:714601884037:web:7a53288a98ebbfc5bd3cec","measurementId":"G-0ERBB0KJ9T"};
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const peerConnectionConfig = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'},{'urls': 'stun:stun1.l.google.com:19302'}]};
+        const firebaseConfig = {
+            apiKey: "AIzaSyCpOy4pqmtIsvJMtgoCzbQkLYTwR61cExk",
+            authDomain: "probody-deec4.firebaseapp.com",
+            databaseURL: "https://probody-deec4-default-rtdb.firebaseio.com",
+            projectId: "probody-deec4",
+            storageBucket: "probody-deec4.appspot.com",
+            messagingSenderId: "704731000262",
+            appId: "1:704731000262:web:4b3f4c4b8a0c4e71a8d6c7",
+            measurementId: "G-PNXEC12ZX4"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(), db = firebase.database();
 
-    // --- SETUP & SESSION MANAGEMENT ---
-    window.addEventListener('DOMContentLoaded', () => {
-        const sessionRaw = localStorage.getItem(SESSION_STORAGE_KEY);
-        if (sessionRaw) {
-            const session = JSON.parse(sessionRaw);
-            if (session.roomId) {
+        // --- Initialization ---
+window.addEventListener('DOMContentLoaded', () => {
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            currentUser = user;
+            deviceId = user.uid;
+            listenToUserData(deviceId);
+            loadRecentParties();
+            const session = JSON.parse(localStorage.getItem(SESSION_KEY));
+            if (session?.partyId) {
                 isHost = session.isHost;
-                isHost ? startHostSession(session.roomId) : startGuestSession(session.roomId);
+                isHost ? startHost() : startGuest(session.partyId);
             }
-        }
-    });
-    function setupHost() {
-        isHost = true;
-        const roomId = prompt("Enter a unique name for your party room:", `party-${Math.random().toString(36).substr(2, 5)}`);
-        if (roomId) {
-            localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ roomId, isHost: true }));
-            startHostSession(roomId);
-        }
-    }
-    function setupGuest() {
-        isHost = false;
-        const roomId = document.getElementById('roomIdInput').value.trim();
-        if (roomId) {
-            localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ roomId, isHost: false }));
-            startGuestSession(roomId);
         } else {
-            alert("Please enter a Room ID.");
+            window.location.href = '../login.html';
         }
-    }
-    document.getElementById('hostBtn').addEventListener('click', setupHost);
-    document.getElementById('joinBtn').addEventListener('click', setupGuest);
-    document.getElementById('leaveBtn').addEventListener('click', disconnect);
-    document.getElementById('clearLogBtn').addEventListener('click', () => {
-        logPopupContent.innerHTML = '';
-        logToUI('Log cleared by user.', 'info');
     });
 
-    function showScreen(screenName) {
-        welcomeScreen.classList.add('d-none');
-        playerScreen.classList.add('d-none');
-        document.getElementById(`${screenName}-screen`).classList.remove('d-none');
-    }
-
-    async function disconnect() {
-        logToUI('Leaving party and clearing session...', 'error');
-        localStorage.removeItem(SESSION_STORAGE_KEY);
-        Object.values(guestConnections).forEach(pc => pc.close());
-        guestConnections = {};
-        guestChannels = [];
-        if (isHost && roomRef) await roomRef.remove();
-        if (roomRef) roomRef.off();
-        isHost = false;
-        audio.pause();
-        audio.currentTime = 0;
-        showScreen('welcome');
-    }
-
-    // --- CORE WEBRTC & FIREBASE LOGIC ---
-    async function startHostSession(roomId) {
-        showScreen('player');
-        infoBar.innerHTML = `Room ID: <strong class="user-select-all">${roomId}</strong> | Guests: <span id="connectionCount">0</span>`;
-        roomRef = db.ref('rooms/' + roomId);
-
-        await roomRef.remove();
-        logToUI(`Starting host session for room: <strong>${roomId}</strong>`, 'success');
-        
-        const tempPC = new RTCPeerConnection(peerConnectionConfig);
-        const offer = await tempPC.createOffer();
-        await tempPC.setLocalDescription(offer);
-        const offerDescription = tempPC.localDescription;
-        tempPC.close();
-
-        await roomRef.child('offer').set(JSON.stringify(offerDescription));
-        logToUI('Waiting for guests to connect...', 'info');
-        
-        roomRef.child('connections').on('child_added', snapshot => {
-            const guestId = snapshot.key;
-            const guestData = snapshot.val();
-            if (guestData.answer && !guestConnections[guestId]) {
-                handleGuestConnection(guestId, guestData.answer, offerDescription);
-            }
-        });
-    }
-
-    async function handleGuestConnection(guestId, answer, offer) {
-        logToUI(`New guest [${guestId.substr(0, 5)}] attempting to join...`, 'info');
-
-        const peerConnection = new RTCPeerConnection(peerConnectionConfig);
-        guestConnections[guestId] = peerConnection;
-
-        peerConnection.onicecandidate = event => {
-            if (event.candidate) {
-                roomRef.child('connections').child(guestId).child('hostCandidates').push().set(JSON.stringify(event.candidate));
-            }
-        };
-
-        roomRef.child('connections').child(guestId).child('guestCandidates').on('child_added', snapshot => {
-            if (snapshot.exists()) {
-                peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(snapshot.val())));
-            }
-        });
-
-        peerConnection.ondatachannel = (event) => {
-            const channel = event.channel;
-            guestChannels.push(channel);
-            
-            channel.onopen = () => {
-                logToUI(`Guest [${guestId.substr(0, 5)}] connected successfully!`, 'success');
-                updateConnectionCount();
-                sendCommandToChannel(channel, { type: 'track', index: currentTrackIndex, time: audio.currentTime });
-                if (!audio.paused) sendCommandToChannel(channel, { type: 'play', time: audio.currentTime });
-            };
-            
-            channel.onclose = () => {
-                logToUI(`Guest [${guestId.substr(0, 5)}] disconnected.`, 'error');
-                guestChannels = guestChannels.filter(c => c !== channel);
-                delete guestConnections[guestId];
-                updateConnectionCount();
-            };
-        };
-        
-        await peerConnection.setLocalDescription(offer);
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(answer)));
-    }
-
-    async function startGuestSession(roomId) {
-        showScreen('player');
-        logToUI(`Attempting to join room: <strong>${roomId}</strong>`, 'info');
-        roomRef = db.ref('rooms/' + roomId);
-        const offerSnapshot = await roomRef.child('offer').once('value');
-        if (!offerSnapshot.exists()) {
-            alert("Room not found. The host may have left or hasn't started yet.");
-            disconnect();
-            return;
-        }
-
-        infoBar.innerHTML = `<i class="bi bi-earbuds"></i> Connected to Party: <strong>${roomId}</strong>`;
-        
-        const connectionRef = roomRef.child('connections').push();
-        const peerConnection = new RTCPeerConnection(peerConnectionConfig);
-
-        peerConnection.onicecandidate = event => {
-            if (event.candidate) {
-                connectionRef.child('guestCandidates').push().set(JSON.stringify(event.candidate));
-            }
-        };
-
-        connectionRef.child('hostCandidates').on('child_added', snapshot => {
-            if(snapshot.exists()){
-                peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(snapshot.val())));
-            }
-        });
-
-        const dataChannel = peerConnection.createDataChannel('guest-channel');
-        dataChannel.onmessage = (event) => handleCommand(JSON.parse(event.data));
-        dataChannel.onopen = () => logToUI('Connection to host is live!', 'success');
-        dataChannel.onclose = () => {
-            alert("Disconnected from host. The party may have ended.");
-            disconnect();
-        };
-
-        const offer = JSON.parse(offerSnapshot.val());
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        
-        await connectionRef.child('answer').set(JSON.stringify(answer));
-        logToUI('Answer sent to host. Exchanging connection details...', 'action');
-    }
-
-    // --- PLAYER & SYNC LOGIC ---
-    function handleCommand(cmd) {
-        switch (cmd.type) {
-            case 'play': audio.currentTime = cmd.time; audio.play(); break;
-            case 'pause': audio.pause(); break;
-            case 'seek': audio.currentTime = cmd.time; break;
-            case 'track': playTrack(cmd.index, false, cmd.time); break;
-        }
-    }
-    function sendCommand(cmd) {
-        if (isHost && guestChannels.length > 0) {
-            const commandStr = JSON.stringify(cmd);
-            logToUI(`TX: <pre class="d-inline">${commandStr}</pre>`, 'sync');
-            guestChannels.forEach(channel => {
-                if (channel.readyState === 'open') channel.send(commandStr);
+    // Copy room ID button
+    infoBar.addEventListener('click', (e) => {
+        if (e.target.closest('.copy-btn')) {
+            const partyId = deviceId;
+            navigator.clipboard.writeText(partyId).then(() => {
+                logToUI('Room ID copied to clipboard!', 'success');
+            }).catch(() => {
+                logToUI('Failed to copy Room ID.', 'error');
             });
         }
-    }
-    function sendCommandToChannel(channel, cmd) {
-        if (channel && channel.readyState === 'open') {
-            channel.send(JSON.stringify(cmd));
+    });
+});
+
+function listenToUserData(userId) {
+    db.ref(`users/${userId}`).on('value', s => {
+        userData = s.exists() ? s.val() : { displayName: 'User' };
+        userNameEl.textContent = userData.displayName;
+        // Update user name in player-actions if already in a party
+        if (partyRef) {
+            const userNameSpan = document.querySelector('#player-actions .user-name');
+            userNameSpan.textContent = isHost ? `Host: ${userData.displayName}` : userData.displayName;
         }
-    }
-    function playTrack(index, fromHostAction = false, startTime = 0) {
-        if(index < 0 || index >= playlistItems.length) return;
-        currentTrackIndex = index;
-        const trackItem = playlistItems[index];
-        playlistItems.forEach(item => item.classList.remove('active'));
-        trackItem.classList.add('active');
-        songTitleEl.textContent = trackItem.dataset.title;
-        audio.src = trackItem.dataset.url;
-        audio.currentTime = startTime;
-        audio.play().catch(e => console.error("Audio play failed:", e));
-        if (isHost && fromHostAction) {
-            sendCommand({ type: 'track', index: index, time: 0 });
+    });
+}
+
+// --- Party Logic ---
+async function startHost() {
+    isHost = true;
+    show("player");
+    playerScreen.classList.add('is-host');
+    const partyId = deviceId;
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ partyId, isHost: true }));
+    // Shorten room ID to first 8 characters
+    const shortPartyId = partyId.slice(0, 8) + '...';
+    document.querySelector('#player-actions .user-info').innerHTML = `
+        <div class="user-name">Host: ${userData.displayName}</div>
+        <div class="guest-count-container">
+            <i class="bi bi-people-fill me-1"></i>
+            <span id="guest-count">0</span> Guest(s)
+        </div>
+    `;
+    infoBar.innerHTML = `
+        <div class="room-id-container">
+            <span id="room-id">${shortPartyId}</span>
+            <button class="copy-btn" aria-label="Copy room ID"><i class="bi bi-clipboard"></i></button>
+        </div>
+    `;
+    partyRef = db.ref(`parties/${partyId}`);
+    libraryRef = db.ref(`libraries/${deviceId}`);
+    await partyRef.set({ hostId: deviceId, guests: {} });
+
+    peerConnection = new RTCPeerConnection(iceConfiguration);
+    peerConnection.onicecandidate = e => e.candidate && partyRef.child('iceCandidates/host').push(e.candidate.toJSON());
+
+    dataChannel = peerConnection.createDataChannel("partySync");
+    dataChannel.onopen = () => {
+        logToUI('[WebRTC] Guest connected!', 'success');
+        connectionStatus.textContent = 'Guest Connected!';
+        connectionOverlay.classList.remove('d-none');
+        setTimeout(() => connectionOverlay.classList.add('d-none'), 1500);
+        sendFullStateToPeers();
+    };
+    dataChannel.onclose = () => logToUI('[WebRTC] Guest disconnected.', 'info');
+
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    await partyRef.child('offer').set({ sdp: offer.sdp, type: offer.type });
+    logToUI('[WebRTC] Party started, waiting for guests.', 'info');
+
+    partyRef.child('answer').on('value', async s => {
+        if (s.exists() && !peerConnection.currentRemoteDescription) {
+            connectionStatus.textContent = 'Guest found, connecting...';
+            connectionOverlay.classList.remove('d-none');
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(s.val()));
+            setTimeout(() => connectionOverlay.classList.add('d-none'), 1500);
         }
-    }
-    playPauseBtn.addEventListener('click', () => {
-        if (!isHost) return;
-        if (audio.paused) { audio.play(); sendCommand({ type: 'play', time: audio.currentTime }); } 
-        else { audio.pause(); sendCommand({ type: 'pause' }); }
     });
-    document.getElementById('nextBtn').addEventListener('click', () => {
-        if (!isHost) return;
-        playTrack((currentTrackIndex + 1) % playlistItems.length, true);
-    });
-    document.getElementById('prevBtn').addEventListener('click', () => {
-        if (!isHost) return;
-        playTrack((currentTrackIndex - 1 + playlistItems.length) % playlistItems.length, true);
-    });
-    playlistEl.addEventListener('click', (e) => {
-        if (!isHost || !e.target.closest('li')) return;
-        const newIndex = Array.from(playlistItems).indexOf(e.target.closest('li'));
-        if (newIndex !== -1) playTrack(newIndex, true);
-    });
-    audio.addEventListener('play', () => {
-        playPauseBtn.innerHTML = pauseIcon;
-        if (!visualizerInitialized) setupAudioVisualizer();
-        drawVisualizer();
-    });
-    audio.addEventListener('pause', () => playPauseBtn.innerHTML = playIcon);
-    audio.addEventListener('seeked', () => {
-        if (isHost) sendCommand({ type: 'seek', time: audio.currentTime });
+    partyRef.child('iceCandidates/guest').on('child_added', s => peerConnection.remoteDescription && s.exists() && peerConnection.addIceCandidate(new RTCIceCandidate(s.val())));
+
+    // Track guest count
+    partyRef.child('guests').on('value', s => {
+        guestCount = s.exists() ? Object.keys(s.val()).length : 0;
+        document.getElementById('guest-count').textContent = guestCount;
     });
 
-    // --- VISUALIZER & UTILITIES ---
-    function setupAudioVisualizer() {
-        try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            source = audioContext.createMediaElementSource(audio);
-            analyser = audioContext.createAnalyser();
-            source.connect(analyser);
-            analyser.connect(audioContext.destination);
-            analyser.fftSize = 256;
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
-            visualizerInitialized = true;
-        } catch (e) {
-            logToUI('Error initializing audio context for visualizer.', 'error');
-            console.error(e);
+    libraryRef.on('value', s => {
+        const newPlaylist = s.exists() ? Object.keys(s.val()).map(key => ({ ...s.val()[key], songId: key })) : [];
+        updatePlaylist(newPlaylist);
+    });
+}
+
+async function startGuest(partyId) {
+    isHost = false;
+    show("player");
+    playerScreen.classList.add('is-guest');
+    connectionOverlay.classList.remove('d-none');
+    seekBar.disabled = true;
+    partyRef = db.ref(`parties/${partyId}`);
+
+    const s = await partyRef.once('value');
+    if (!s.exists() || !s.child('offer').exists()) {
+        alert('Party not found!');
+        disconnect();
+        return;
+    }
+
+    connectionStatus.textContent = 'Party found, connecting...';
+    peerConnection = new RTCPeerConnection(iceConfiguration);
+    peerConnection.onicecandidate = e => e.candidate && partyRef.child('iceCandidates/guest').push(e.candidate.toJSON());
+
+    peerConnection.ondatachannel = event => {
+        dataChannel = event.channel;
+        dataChannel.onmessage = e => handleStateSync(JSON.parse(e.data));
+        dataChannel.onopen = () => {
+            logToUI('[WebRTC] Connected to host!', 'success');
+            const shortPartyId = partyId.slice(0, 8) + '...';
+            document.querySelector('#player-actions .user-info').innerHTML = `
+                <div class="user-name">${userData.displayName}</div>
+                <div class="guest-count-container">
+                    <i class="bi bi-people-fill me-1"></i>
+                    <span id="guest-count">0</span> Guest(s)
+                </div>
+            `;
+            infoBar.innerHTML = `
+                <div class="room-id-container">
+                    <span id="room-id">${shortPartyId}</span>
+                    <button class="copy-btn" aria-label="Copy room ID"><i class="bi bi-clipboard"></i></button>
+                </div>
+            `;
+            connectionOverlay.classList.add('d-none');
+            addRecentParty(partyId);
+        };
+        dataChannel.onclose = () => {
+            logToUI('[WebRTC] Host disconnected.', 'error');
+            disconnect();
+        };
+    };
+
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(s.child('offer').val()));
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    await partyRef.child('answer').set({ sdp: answer.sdp, type: answer.type });
+    connectionStatus.textContent = 'Finalizing connection...';
+
+    partyRef.child('iceCandidates/host').on('child_added', s => peerConnection.remoteDescription && s.exists() && peerConnection.addIceCandidate(new RTCIceCandidate(s.val())));
+
+    // Add guest to party
+    await partyRef.child(`guests/${deviceId}`).set({ name: userData.displayName });
+    // Track guest count
+    partyRef.child('guests').on('value', s => {
+        guestCount = s.exists() ? Object.keys(s.val()).length : 0;
+        document.getElementById('guest-count').textContent = guestCount;
+    });
+}
+
+        // --- Recent Parties ---
+        function loadRecentParties() {
+            const recentParties = JSON.parse(localStorage.getItem(RECENT_PARTIES_KEY)) || [];
+            recentPartiesList.innerHTML = recentParties.map(partyId => `
+                <li class="list-group-item" data-party-id="${partyId}" role="button" aria-label="Join recent party ${partyId}">
+                    Party ID: ${partyId}
+                </li>
+            `).join('');
+            recentPartiesList.querySelectorAll('.list-group-item').forEach(item => {
+                item.addEventListener('click', () => startGuest(item.dataset.partyId));
+            });
         }
-    }
-    function drawVisualizer() {
-        if (audio.paused || !visualizerInitialized) return;
-        requestAnimationFrame(drawVisualizer);
-        analyser.getByteFrequencyData(dataArray);
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
-        canvasCtx.fillStyle = '#212529';
-        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-        const bufferLength = analyser.frequencyBinCount;
-        const barWidth = (canvas.width / bufferLength) * 2;
-        let x = 0;
-        const gradient = canvasCtx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, '#69f0ae');
-        gradient.addColorStop(1, '#1DB954');
-        for(let i = 0; i < bufferLength; i++) {
-            let barHeight = dataArray[i] * (canvas.height / 255);
-            canvasCtx.fillStyle = gradient;
-            canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-            x += barWidth + 1;
+
+        function addRecentParty(partyId) {
+            let recentParties = JSON.parse(localStorage.getItem(RECENT_PARTIES_KEY)) || [];
+            if (!recentParties.includes(partyId)) {
+                recentParties.unshift(partyId);
+                recentParties = recentParties.slice(0, 5); // Limit to 5 recent parties
+                localStorage.setItem(RECENT_PARTIES_KEY, JSON.stringify(recentParties));
+                loadRecentParties();
+            }
         }
-    }
-    function updateConnectionCount() {
-        const countEl = document.getElementById('connectionCount');
-        if (countEl) countEl.textContent = guestChannels.length;
-    }
-    function logToUI(message, type = 'info') {
-        const timestamp = new Date().toLocaleTimeString();
-        const logEntry = document.createElement('div');
-        let icon = '';
-        switch (type) {
-            case 'success': icon = '<i class="bi bi-check-circle-fill text-success"></i> '; break;
-            case 'error': icon = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> '; break;
-            case 'action': icon = '<i class="bi bi-arrow-right-short text-primary"></i> '; break;
-            case 'sync': icon = '<i class="bi bi-broadcast text-info"></i> '; break;
-            case 'info': icon = '<i class="bi bi-info-circle-fill text-secondary"></i> '; break;
+
+        // --- Screen Management ---
+        function show(screen) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screen + "-screen").classList.add('active');
         }
-        logEntry.innerHTML = `${icon}[${timestamp}] ${message}`;
-        logPopupContent.appendChild(logEntry);
-        logPopupContent.scrollTop = logPopupContent.scrollHeight;
-    }
-</script>
+
+        async function disconnect() {
+            localStorage.removeItem(SESSION_KEY);
+            dataChannel?.close();
+            peerConnection?.close();
+            if (isHost && partyRef) {
+                await partyRef.remove();
+            }
+            partyRef?.off();
+            libraryRef?.off();
+            isHost = false;
+            audio.pause();
+            audio.src = '';
+            document.exitFullscreen?.();
+            show('welcome');
+        }
+
+
+        // --- Playback Logic ---
+        function broadcastState() {
+            if (!isHost || dataChannel?.readyState !== 'open') return;
+            const state = { type: 'state', payload: { trackIndex: currentTrackIndex, time: audio.currentTime, isPaused: audio.paused } };
+            dataChannel.send(JSON.stringify(state));
+        }
+
+        function sendFullStateToPeers() {
+            if (!isHost || dataChannel?.readyState !== 'open') return;
+            const state = { type: 'fullSync', payload: { playlist: playlistItems, trackIndex: currentTrackIndex, time: audio.currentTime, isPaused: audio.paused } };
+            dataChannel.send(JSON.stringify(state));
+        }
+
+        function handleStateSync(data) {
+            lastKnownState = data.payload;
+            if (data.type === 'fullSync') {
+                updatePlaylist(data.payload.playlist);
+            }
+            const state = data.payload;
+            if (playlistItems.length === 0 || state.trackIndex >= playlistItems.length) return;
+
+            if (currentTrackIndex !== state.trackIndex) playTrack(state.trackIndex, false);
+            else if (Math.abs(audio.currentTime - state.time) > 1.0) audio.currentTime = state.time;
+
+            if (state.isPaused && !audio.paused) audio.pause();
+            else if (!state.isPaused && audio.paused && userInteracted) audio.play().catch(e => e.name === 'NotAllowedError' && connectionOverlay.classList.remove('d-none'));
+        }
+
+        function playTrack(index, isHostAction) {
+            if (!playlistItems || index >= playlistItems.length) {
+                if (isHost) broadcastState();
+                return;
+            }
+            if (index < 0) index = 0;
+            currentTrackIndex = index;
+            const track = playlistItems[index];
+
+            if (!track || !track.url) {
+                if (isHost) nextBtn.click();
+                return;
+            }
+            songTitleEl.textContent = track.title || 'Untitled';
+            artistEl.textContent = track.artist || 'Unknown Artist';
+            albumArtMain.style.backgroundImage = track.albumArt ? `url(${track.albumArt})` : '';
+            albumArtBg.style.backgroundImage = track.albumArt ? `url(${track.albumArt})` : '';
+            document.body.classList.toggle('has-album-art', !!track.albumArt);
+
+            if (audio.src !== track.url) {
+                audio.src = track.url;
+                audio.load();
+                const onCanPlay = () => {
+                    const shouldPlay = isHostAction || (lastKnownState && !lastKnownState.isPaused && userInteracted);
+                    if (shouldPlay) audio.play().catch(e => e.name === 'NotAllowedError' && connectionOverlay.classList.remove('d-none'));
+                };
+                audio.addEventListener('canplay', onCanPlay, { once: true });
+                audio.addEventListener('error', () => {
+                    logToUI(`Error loading ${track.title}. Skipping.`, 'error');
+                    if (isHost) nextBtn.click();
+                }, { once: true });
+            } else if (isHostAction) {
+                audio.play().catch(console.error);
+            }
+            if (isHostAction) broadcastState();
+        }
+
+        function updatePlaylist(newPlaylist) {
+            const wasEmpty = playlistItems.length === 0;
+            playlistItems = newPlaylist || [];
+            libraryListEl.innerHTML = playlistItems.map((item, index) => `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${item.title} by ${item.artist}</span>
+                    ${isHost ? `<button class="btn btn-sm btn-danger" onclick="deleteSong('${item.songId}')" aria-label="Delete ${item.title}">Delete</button>` : ''}
+                </li>
+            `).join('');
+            if (isHost && wasEmpty && playlistItems.length > 0) playTrack(0, true);
+            if (isHost && dataChannel?.readyState === 'open') sendFullStateToPeers();
+        }
+
+        // --- Library Management ---
+        function addCustomSong() {
+            const url = customSongUrlInput.value.trim();
+            if (!url || !url.match(/\.(mp3)$/i)) {
+                alert('Please enter a valid MP3 URL.');
+                return;
+            }
+            const songId = libraryRef.push().key;
+            const songInfo = parseSongInfo(url.split('/').pop());
+            const songData = {
+                ...songInfo,
+                url,
+                uploaderUid: currentUser.uid
+            };
+            libraryRef.child(songId).set(songData);
+            customSongUrlInput.value = '';
+        }
+
+        function deleteSong(songId) {
+            if (!isHost) return;
+            libraryRef.child(songId).remove();
+        }
+
+        function parseSongInfo(filename) {
+            const cleanedName = filename.replace(/\.[^/.]+$/, "");
+            if (cleanedName.includes(' - ')) {
+                const parts = cleanedName.split(' - ');
+                return { artist: parts[0].trim(), title: parts.slice(1).join(' - ').trim() };
+            }
+            return { artist: 'Unknown Artist', title: cleanedName };
+        }
+
+        // --- Event Listeners ---
+        hostBtn.onclick = startHost;
+        document.getElementById("joinBtn").onclick = () => {
+            const partyId = document.getElementById("partyIdInput").value.trim();
+            if (partyId) startGuest(partyId);
+        };
+        document.getElementById("leaveBtn").onclick = disconnect;
+        fullscreenBtn.onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+        playPauseBtn.onclick = () => {
+            if (isHost) audio.paused ? audio.play() : audio.pause();
+        };
+        prevBtn.onclick = () => {
+            if (isHost) playTrack((currentTrackIndex - 1 + playlistItems.length) % playlistItems.length, true);
+        };
+        nextBtn.onclick = () => {
+            if (isHost) playTrack((currentTrackIndex + 1) % playlistItems.length, true);
+        };
+        addCustomUrlBtn.onclick = addCustomSong;
+
+        const playIcon = '<i class="bi bi-play-circle-fill"></i>',
+              pauseIcon = '<i class="bi bi-pause-circle-fill"></i>';
+        audio.onplay = () => {
+            if (isHost) playPauseBtn.innerHTML = pauseIcon;
+            broadcastState();
+        };
+        audio.onpause = () => {
+            if (isHost) playPauseBtn.innerHTML = playIcon;
+            broadcastState();
+        };
+        audio.onended = () => {
+            if (isHost) nextBtn.click();
+        };
+        audio.ontimeupdate = () => {
+            seekBar.value = (audio.currentTime / audio.duration) * 100 || 0;
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+            broadcastState();
+        };
+        audio.onloadedmetadata = () => durationEl.textContent = formatTime(audio.duration);
+        seekBar.oninput = (e) => {
+            if (!isHost) return;
+            audio.currentTime = (e.target.value / 100) * audio.duration;
+        };
+
+        function formatTime(s) {
+            const m = Math.floor((s || 0) / 60);
+            return `${m}:${(Math.floor((s || 0) % 60)) < 10 ? '0' : ''}${Math.floor((s || 0) % 60)}`;
+        }
+
+        function logToUI(m, t = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${m}`;
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+            logEntry.style.color = t === 'success' ? '#28a745' : t === 'error' ? '#dc3545' : t === 'info' ? '#17a2b8' : textColor;
+            logPopupContent.appendChild(logEntry);
+            logPopupContent.scrollTop = logPopupContent.scrollHeight;
+        }
+    </script>
+  
 </body>
 </html>
+   
