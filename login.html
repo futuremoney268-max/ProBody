@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Music Party Cloud</title>
+  
+  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.8.1/firebase-ui-auth.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);background-size:400% 400%;animation:gradientBG 18s ease infinite;color:#ffffff;overflow-x:hidden;}
+    @keyframes gradientBG{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    .screen{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+    .card-glass{background:rgba(255,255,255,0.08);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border-radius:20px;border:1px solid rgba(255,255,255,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+    #firebaseui-auth-container{margin-top:2rem;}
+    .profile-pic { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #1DB954; object-fit: cover; }
+  </style>
+</head>
+<body>
+
+<div class="screen">
+  <div id="auth-card" class="card-glass p-4" style="max-width: 450px;">
+    <div class="card-body text-center">
+      
+      <!-- Login View -->
+      <div id="login-container">
+        <i class="bi bi-music-note-beamed" style="font-size:4rem;color:#1DB954;"></i>
+        <h2 class="mt-3 fw-bold">Welcome to Music Party</h2>
+        <p class="text-white-50">Sign in to continue.</p>
+        <div id="firebaseui-auth-container"></div>
+        <div id="loader" class="text-center mt-3">
+            <div class="spinner-border text-success" role="status"><span class="visually-hidden">Loading...</span></div>
+        </div>
+      </div>
+
+      <!-- Welcome View (Initially Hidden) -->
+      <div id="welcome-container" class="d-none">
+          <img id="user-photo" src="" alt="User Photo" class="profile-pic mb-3">
+          <h3 class="fw-bold">Welcome, <span id="user-name"></span>!</h3>
+          <p id="user-email" class="text-white-50"></p>
+          <div class="d-grid gap-2 mt-4">
+              <button id="enterAppBtn" class="btn btn-success btn-lg rounded-pill"><i class="bi bi-arrow-right-circle-fill me-2"></i>Open Music Player</button>
+              <button id="signOutBtn" class="btn btn-outline-light btn-sm rounded-pill mt-2">Sign Out</button>
+          </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/ui/4.8.1/firebase-ui-auth.js"></script>
+
+  <script>
+    // --- FIREBASE CONFIG (Add your databaseURL) ---
+    const firebaseConfig = {
+  apiKey: "AIzaSyCpOy4pqmtIsvJMtgoCzbQkLYTwR61cExk",
+  authDomain: "probody-deec4.firebaseapp.com",
+  databaseURL: "https://probody-deec4-default-rtdb.firebaseio.com",
+  projectId: "probody-deec4",
+  storageBucket: "probody-deec4.firebasestorage.app",
+  messagingSenderId: "704731000262",
+  appId: "1:704731000262:web:4b3f4c4b8a0c4e71a8d6c7",
+  measurementId: "G-PNXEC12ZX4"
+};
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // --- DOM ELEMENTS ---
+    const loader = document.getElementById('loader');
+    const loginContainer = document.getElementById('login-container');
+    const welcomeContainer = document.getElementById('welcome-container');
+    const userNameEl = document.getElementById('user-name');
+    const userEmailEl = document.getElementById('user-email');
+    const userPhotoEl = document.getElementById('user-photo');
+    const enterAppBtn = document.getElementById('enterAppBtn');
+    const signOutBtn = document.getElementById('signOutBtn');
+
+    // --- UI HELPER FUNCTIONS ---
+    function showLoginScreen() {
+        loginContainer.classList.remove('d-none');
+        welcomeContainer.classList.add('d-none');
+        // Initialize and start the FirebaseUI widget.
+        const ui = new firebaseui.auth.AuthUI(firebase.auth());
+        ui.start('#firebaseui-auth-container', uiConfig);
+    }
+
+    function showWelcomeScreen(user) {
+        loginContainer.classList.add('d-none');
+        welcomeContainer.classList.remove('d-none');
+        userNameEl.textContent = user.displayName || 'Friend';
+        userEmailEl.textContent = user.email;
+        userPhotoEl.src = user.photoURL || 'https://via.placeholder.com/80'; // Fallback image
+    }
+
+    // --- FIREBASEUI CONFIG ---
+    const uiConfig = {
+      callbacks: {
+        signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+          const user = authResult.user;
+          if (authResult.additionalUserInfo.isNewUser) {
+            // Create user profile in the database
+            const userRef = db.ref(`users/${user.uid}`);
+            return userRef.set({
+              displayName: user.displayName,
+              email: user.email,
+              photoURL: user.photoURL,
+              uid: user.uid,
+              joiningDate: firebase.database.ServerValue.TIMESTAMP,
+              userType: "standard",
+              uploadCredits: 1, // Free credit
+              songsUploaded: 0,
+              level: 1
+            }).then(() => {
+                // After DB write, we don't redirect. The auth state change will handle the UI.
+                return false; 
+            }).catch(error => {
+                console.error("Error creating user profile:", error);
+                alert("Could not create your user profile. Please try again.");
+                return false;
+            });
+          }
+          // For existing users, just prevent the redirect.
+          return false;
+        },
+        uiShown: function() {
+          loader.classList.add('d-none');
+        }
+      },
+      signInFlow: 'redirect',
+      // No signInSuccessUrl needed as we handle it manually.
+      signInOptions: [
+        firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+        firebase.auth.EmailAuthProvider.PROVIDER_ID
+      ],
+    };
+
+    // --- MAIN AUTH LOGIC ---
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        // User is signed in. Show the welcome screen.
+        showWelcomeScreen(user);
+      } else {
+        // User is signed out. Show the login screen.
+        showLoginScreen();
+      }
+    });
+
+    enterAppBtn.addEventListener('click', () => {
+        // IMPORTANT: Adjust this path to your main app file
+        window.location.href = './assistant/Demo.html'; 
+    });
+
+    signOutBtn.addEventListener('click', () => {
+        auth.signOut();
+    });
+  </script>
+</body>
+</html>
