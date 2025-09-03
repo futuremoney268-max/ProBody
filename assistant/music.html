@@ -28,38 +28,353 @@
         .player-layout { width: 100%; height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
         #player-header { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); backdrop-filter: blur(10px); }
         .player-main-content { overflow-y: auto; padding: 1.5rem; }
-        .player-footer { background: rgba(0,0,0,0.4); backdrop-filter: blur(15px); border-top: 1px solid var(--card-border); }
+        /* === NEW: Modern & Responsive Footer Styling === */
+.player-footer {
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(15px);
+    border-top: 1px solid var(--card-border);
+}
+
+.now-playing-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); /* Flexible 3-column layout */
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.75rem 1.5rem;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Left: Song Info */
+.song-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0; /* Prevents text overflow from pushing layout */
+}
+#footer-album-art {
+    width: 56px;
+    height: 56px;
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+}
+#footer-song-title {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#footer-song-artist {
+    color: var(--text-color-muted);
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Center: Player Controls */
+.player-controls-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+}
+.footer-buttons {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.footer-buttons .btn {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.5rem;
+    transition: all 0.2s ease;
+}
+.footer-buttons .btn:hover {
+    color: var(--brand-color);
+    transform: scale(1.1);
+}
+.footer-buttons #playPauseBtn {
+    font-size: 2.8rem;
+}
+.is-guest .host-only {
+    display: none !important;
+}
+
+/* Center: Progress Bar */
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+#seekBar {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(to right, var(--brand-color) var(--seek-progress, 0%), rgba(255,255,255,0.2) var(--seek-progress, 0%));
+    border-radius: 3px;
+    outline: none;
+    transition: height 0.2s ease;
+}
+#seekBar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--text-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+#seekBar:hover::-webkit-slider-thumb {
+    transform: scale(1.2);
+}
+.is-guest #seekBar {
+    pointer-events: none;
+}
+
+/* Right: Actions */
+.footer-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* === Responsive Overhaul for Mobile === */
+@media (max-width: 768px) {
+    .now-playing-bar {
+        grid-template-columns: 1fr auto; /* Song info and actions on top row */
+        grid-template-rows: auto auto;    /* Controls/progress on second row */
+        gap: 0.5rem 1rem;
+        padding: 0.75rem 1rem;
+    }
+    .song-info {
+        grid-column: 1 / 2;
+        grid-row: 1 / 2;
+    }
+    .player-controls-center {
+        grid-column: 1 / 3; /* Span full width */
+        grid-row: 2 / 3;
+    }
+    .footer-actions {
+        grid-column: 2 / 3;
+        grid-row: 1 / 2;
+    }
+    #footer-album-art { width: 48px; height: 48px; }
+    .footer-buttons { gap: 0.5rem; }
+    .footer-buttons #playPauseBtn { font-size: 2.5rem; }
+}
         
-        #player-header .user-info { display: flex; align-items: center; gap: 0.75rem; background: var(--card-bg); padding: 0.5rem 1rem; border-radius: 2rem; border: 1px solid var(--card-border); }
+        #player-header .user-info, #ping-display { display: flex; align-items: center; gap: 0.75rem; background: var(--card-bg); padding: 0.5rem 1rem; border-radius: 2rem; border: 1px solid var(--card-border); }
         .action-buttons { display: flex; align-items: center; gap: 0.75rem; }
         .action-buttons .btn { color: var(--text-color); background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; }
         .action-buttons .btn:hover { background: var(--brand-color); border-color: var(--brand-color); }
 
-        .now-playing-bar { display: grid; grid-template-columns: 1fr 2fr 1fr; align-items: center; gap: 1rem; padding: 1rem 1.5rem; }
-        .song-info { display: flex; align-items: center; gap: 1rem; }
-        #footer-album-art { width: 60px; height: 60px; background-color: rgba(255,255,255,0.1); border-radius: 8px; background-size: cover; background-position: center; }
-        #footer-song-title { font-weight: 700; }
-        #footer-song-artist { color: var(--text-color-muted); font-size: 0.9rem; }
-        .player-controls-footer { display: flex; flex-direction: column; align-items: center; }
-        .footer-buttons { display: flex; align-items: center; gap: 1rem; }
-        .footer-buttons .btn { background: transparent; border: none; color: var(--text-color); font-size: 1.5rem; }
-        .footer-buttons #playPauseBtn { font-size: 2.5rem; }
-        .is-guest .host-only { display: none !important; }
+/* === NEW: Modern & Responsive Bottom Sheet Styling === */
+.player-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-        #seekBar { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: linear-gradient(to right, var(--brand-color) var(--seek-progress, 0%), rgba(255,255,255,0.2) var(--seek-progress, 0%)); border-radius: 3px; outline: none; }
-        #seekBar::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; background: var(--text-color); border-radius: 50%; cursor: pointer; }
-        .is-guest #seekBar { pointer-events: none; }
+.now-playing-bar {
+    position: relative;
+    background: rgba(10, 10, 25, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
+    border-radius: 1.5rem;
+    padding: 0.75rem 1.5rem;
+    display: grid;
+    align-items: center;
+    gap: 1.5rem;
+    height: 90px; /* Collapsed height */
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-        #library-list .list-group-item { background: transparent; border-color: var(--card-border); color: var(--text-color); transition: background-color 0.2s; border-left: 3px solid transparent; }
-        #library-list .list-group-item:hover { background-color: rgba(255,255,255,0.05); }
-        body.is-playing #library-list .list-group-item.active { background-color: rgba(0, 191, 255, 0.1); border-left-color: var(--brand-color); }
-        
+/* --- The Checkbox Hack for State Change --- */
+#footer-toggle:checked ~ .now-playing-bar {
+    height: 140px; /* Expanded height */
+}
+
+/* Expand/Collapse Button */
+.expand-btn {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 25px;
+    background: inherit;
+    border: 1px solid var(--card-border);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.4s ease;
+}
+.expand-btn i { transition: transform 0.4s ease; }
+#footer-toggle:checked ~ .now-playing-bar .expand-btn i {
+    transform: rotate(180deg);
+}
+
+/* Left: Song Info */
+.song-info { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+#footer-album-art { width: 56px; height: 56px; background-color: rgba(255,255,255,0.1); border-radius: 8px; background-size: cover; background-position: center; flex-shrink: 0; }
+#footer-song-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#footer-song-artist { color: var(--text-color-muted); font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Center: Player Controls */
+.player-controls-center { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 500px; }
+.footer-buttons { display: flex; align-items: center; gap: 1rem; }
+.footer-buttons .btn { background: transparent; border: none; color: var(--text-color); font-size: 1.5rem; transition: all 0.2s ease; }
+.footer-buttons .btn:hover { color: var(--brand-color); transform: scale(1.1); }
+.footer-buttons #playPauseBtn { font-size: 2.8rem; }
+.progress-container { display: flex; align-items: center; gap: 0.75rem; width: 100%; opacity: 0; visibility: hidden; transition: all 0.2s ease; }
+#footer-toggle:checked ~ .now-playing-bar .progress-container { opacity: 1; visibility: visible; }
+
+/* Right: Collapsed Controls (Initially Hidden) */
+.collapsed-controls { display: none; }
+
+/* Seek Bar */
+#seekBar { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: linear-gradient(to right, var(--brand-color) var(--seek-progress, 0%), rgba(255,255,255,0.2) var(--seek-progress, 0%)); border-radius: 3px; outline: none; }
+#seekBar::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; background: var(--text-color); border-radius: 50%; cursor: pointer; }
+.is-guest .host-only { display: none !important; }
+
+/* === Responsive Overhaul for Mobile === */
+@media (max-width: 768px) {
+    .player-footer { padding: 0; }
+    .now-playing-bar {
+        border-radius: 1.5rem 1.5rem 0 0;
+        grid-template-columns: 1fr auto;
+        height: 80px; /* Collapsed mobile height */
+    }
+    #footer-toggle:checked ~ .now-playing-bar {
+        height: 200px; /* Expanded mobile height */
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    .song-info { grid-column: 1 / 2; }
+    
+    /* Hide the main controls and show the simplified ones in collapsed mobile view */
+    .player-controls-center { display: none; }
+    .collapsed-controls { display: flex; align-items: center; }
+    .collapsed-controls .btn { background: transparent; border: none; color: var(--text-color); font-size: 1.8rem; }
+
+    /* In expanded mobile view, show the full controls and stack them */
+    #footer-toggle:checked ~ .now-playing-bar .player-controls-center {
+        display: flex;
+        grid-column: 1 / 2;
+        padding-top: 1rem;
+    }
+    #footer-toggle:checked ~ .now-playing-bar .collapsed-controls {
+        display: none;
+    }
+    #footer-toggle:checked ~ .now-playing-bar .song-info {
+        justify-content: center; /* Center song info when expanded */
+    }
+}
+
+/* === NEW: Styling for Generated Album Art === */
+#footer-album-art.generated-art {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.is-guest .host-only {
+    display: none !important;
+}
+
+/* --- Seek Bar --- */
+#seekBar {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px; /* smaller height */
+    background: linear-gradient(to right, var(--brand-color) var(--seek-progress, 0%), rgba(255,255,255,0.2) var(--seek-progress, 0%));
+    border-radius: 3px;
+    outline: none;
+}
+
+#seekBar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px; /* smaller thumb */
+    height: 12px;
+    background: var(--text-color);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.is-guest #seekBar {
+    pointer-events: none;
+}
+
+/* --- Library List --- */
+#library-list .list-group-item {
+    background: transparent;
+    border-color: var(--card-border);
+    color: var(--text-color);
+    transition: background-color 0.2s, border 0.2s;
+    border-left: 3px solid transparent; /* left border indicator for active song */
+}
+
+#library-list .list-group-item:hover {
+    background-color: rgba(255,255,255,0.05); /* subtle hover */
+}
+
+/* Active song: only border stroke */
+#library-list .list-group-item.active {
+    background-color: transparent !important;
+    border-left: 3px solid var(--brand-color); /* border highlight */
+}
+        /* === NEW: Styling for Inline Ping Display === */
+#ping-display {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-color-muted);
+    background-color: var(--card-bg);
+    padding: 0.25rem 0.75rem;
+    border-radius: 2rem;
+    border: 1px solid var(--card-border);
+}
+
+#ping-display .bi {
+    color: var(--brand-color); /* Makes the reception icon vibrant */
+}
+.header-logo {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover; /* Ensures the logo isn't stretched */
+    border: 1px solid var(--card-border);
+}
+
         #connection-overlay { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px); background: rgba(0,0,0,0.7); z-index: 1000; }
         .loader span { width: 12px; height: 12px; background: var(--brand-color); border-radius: 50%; animation: bounce 1.2s infinite ease-in-out; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
         
         .modal-content { background: #181818; border-radius: 1rem; color: var(--text-color); border: 1px solid var(--card-border); }
-        #qr-code-canvas { border: 5px solid white; border-radius: 0.5rem; }
     </style>
 </head>
 <body>
@@ -71,45 +386,148 @@
         <div id="connection-overlay" class="d-none"><div class="loader d-flex gap-2"><span></span><span></span><span></span></div><p id="connection-status" class="mt-3 fs-5">Initializing...</p></div>
 
         <div class="player-layout">
-            <header id="player-header">
-                <div class="user-info"><div id="user-display-name" class="user-name"></div></div>
-                <div class="action-buttons"><button class="btn" data-bs-toggle="modal" data-bs-target="#infoModal" aria-label="Party Info"><i class="bi bi-info-circle"></i></button><button id="manageLibraryBtn" class="btn host-only" data-bs-toggle="modal" data-bs-target="#libraryModal"><i class="bi bi-plus-lg"></i></button><button id="leaveBtn" class="btn btn-danger" aria-label="Leave party"><i class="bi bi-box-arrow-left"></i></button></div>
-            </header>
-            <main class="player-main-content">
-                <h3 class="mb-3 d-flex justify-content-between align-items-center">
-                    <span>Playlist (<span id="guest-count">0</span> Guests)</span>
-                    <div id="ping-display" class="d-none"><i class="bi bi-reception-4 me-2"></i><span id="ping-value">-</span> ms</div>
-                </h3>
-                <ul id="library-list" class="list-group list-group-flush"></ul>
-            </main>
-            <footer class="player-footer">
-                <div class="now-playing-bar">
-                    <div class="song-info"><div id="footer-album-art"></div><div><div id="footer-song-title" class="fw-bold">No song playing</div><div id="footer-song-artist" class="small"></div></div></div>
-                    <div class="player-controls-footer">
-                        <div class="footer-buttons host-only"><button id="prevBtn" class="btn"><i class="bi bi-skip-start-fill"></i></button><button id="playPauseBtn" class="btn"><i class="bi bi-play-circle-fill"></i></button><button id="nextBtn" class="btn"><i class="bi bi-skip-end-fill"></i></button></div>
-                        <div class="progress-container w-100 mt-2"><input type="range" id="seekBar" value="0"><div class="d-flex justify-content-between font-monospace small text-white-50 mt-1"><span id="current-time">0:00</span><span id="duration">0:00</span></div></div>
-                    </div>
-                    <div class="d-flex justify-content-end align-items-center"><button id="fullscreenBtn" class="btn action-buttons" aria-label="Toggle fullscreen"><i class="bi bi-fullscreen"></i></button></div>
-                </div>
-            </footer>
+    <header id="player-header">
+        <!-- === UPDATED: New structure with Logo === -->
+        <div class="user-info">
+            <img src="../Logo.png" alt="Logo" class="header-logo">
+            <div id="user-display-name" class="user-name"></div>
         </div>
+        <div class="action-buttons">
+            <button class="btn" data-bs-toggle="modal" data-bs-target="#infoModal" aria-label="Party Info"><i class="bi bi-info-circle"></i></button>
+            <!-- === UPDATED: Icon changed from list to plus === -->
+            <button id="manageLibraryBtn" class="btn host-only" data-bs-toggle="modal" data-bs-target="#libraryModal" aria-label="Add to Playlist">
+                <i class="bi bi-plus-lg"></i>
+            </button>
+                    <div class="footer-actions">
+            <button id="fullscreenBtn" class="btn action-buttons" aria-label="Toggle fullscreen"><i class="bi bi-fullscreen"></i></button>
+        </div>
+
+            <button id="leaveBtn" class="btn btn-danger" aria-label="Leave party"><i class="bi bi-box-arrow-left"></i></button>
+        </div>
+    </header>
+
+    <main class="player-main-content">
+        <h2 class="mb-3 d-flex justify-content-between align-items-center">
+            <span>Playlist (<span id="guest-count">0</span> Guests)</span>
+            <div id="ping-display" class="d-none d-flex align-items-center">
+                <i class="bi bi-reception-4 me-2"></i>
+                <span id="ping-value">-</span> ms
+            </div>
+        </h2>
+        <ul id="library-list" class="list-group list-group-flush"></ul>
+    </main>
+            
+   <footer class="player-footer">
+    <!-- This hidden checkbox controls the expand/collapse state -->
+    <input type="checkbox" id="footer-toggle" class="d-none">
+
+    <div class="now-playing-bar">
+        <!-- This label is the visible button to expand/collapse -->
+        <label for="footer-toggle" class="expand-btn host-only" aria-label="Expand player controls">
+            <i class="bi bi-chevron-up"></i>
+        </label>
+
+        <div class="song-info">
+            <div id="footer-album-art"></div>
+            <div>
+                <div id="footer-song-title" class="fw-bold">No song playing</div>
+                <div id="footer-song-artist" class="small"></div>
+            </div>
+        </div>
+
+        <div class="player-controls-center">
+            <!-- These buttons are visible in BOTH states on desktop, but only expanded on mobile -->
+            <div class="footer-buttons host-only">
+                <button id="prevBtn" class="btn btn-secondary" aria-label="Previous"><i class="bi bi-skip-start-fill"></i></button>
+                <button id="playPauseBtn" class="btn" aria-label="Play/Pause"><i class="bi bi-play-circle-fill"></i></button>
+                <button id="nextBtn" class="btn btn-main" aria-label="Next"><i class="bi bi-skip-end-fill"></i></button>
+            </div>
+
+            <!-- This progress bar is ONLY visible in the expanded state -->
+            <div class="progress-container w-100">
+                <span id="current-time" class="font-monospace small text-white-50">0:00</span>
+                <input type="range" id="seekBar" value="0">
+                <span id="duration" class="font-monospace small text-white-50">0:00</span>
+            </div>
+        </div>
+
+        <!-- This is a simplified set of controls for the COLLAPSED mobile view -->
+        <div class="collapsed-controls host-only">
+            <button id="playPauseBtn-collapsed" class="btn" aria-label="Play/Pause"><i class="bi bi-play-circle-fill"></i></button>
+            <button id="nextBtn-collapsed" class="btn" aria-label="Next"><i class="bi bi-skip-end-fill"></i></button>
+        </div>
+    </div>
+</footer>
+</div>
+        
         <audio id="audioPlayer" crossorigin="anonymous"></audio>
     </div>
 
     <!-- Modals -->
     <div class="modal fade" id="infoModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="bi bi-info-circle me-2"></i>Party Info</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><div class="host-only mb-3"><p>Guests can scan this QR code to join!</p><canvas id="qr-code-canvas"></canvas></div><p class="text-white-50">Or share this Party ID:</p><div class="input-group"><input type="text" id="party-id-text" class="form-control" readonly><button class="btn btn-brand" id="copy-id-btn"><i class="bi bi-clipboard"></i></button></div><hr><div class="text-start"><strong>Host:</strong> <span id="modal-host-name"></span><br><strong>Guests (<span id="modal-guest-count">0</span>):</strong><ul id="modal-guest-list" class="list-unstyled ps-3"></ul></div></div></div></div></div>
-    <div class="modal fade" id="libraryModal" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="bi bi-music-note-list me-2"></i>My Music Library</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><ul class="nav nav-tabs nav-fill" role="tablist"><li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#my-songs-pane" type="button"><i class="bi bi-collection-play-fill me-2"></i>My Songs</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#add-new-pane" type="button"><i class="bi bi-cloud-arrow-up-fill me-2"></i>Add New</button></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="my-songs-pane" role="tabpanel"><ul id="library-list" class="list-group list-group-flush mt-3"></ul></div><div class="tab-pane fade" id="add-new-pane" role="tabpanel"><div class="p-3"><div id="upload-progress-container" class="progress mb-3 d-none"><div id="upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width:0%"></div></div><div class="d-grid gap-3"><p class="text-white-50 text-center small">Upload MP3 files or add a direct URL.</p><label for="songFileInput" id="uploadBtnLabel" class="btn btn-brand"><i class="bi bi-upload me-2"></i>Upload MP3 File</label><input type="file" id="songFileInput" accept="audio/mpeg" class="d-none"><div class="input-group"><input type="url" id="customSongUrlInput" class="form-control" placeholder="Enter custom MP3 URL"><button id="addCustomUrlBtn" class="btn btn-outline-success"><i class="bi bi-plus-circle-fill"></i></button></div></div></div></div></div></div></div></div></div>
-    <div class="modal fade" id="qrScannerModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content bg-dark text-white rounded-3"><div class="modal-header border-0"><h5 class="modal-title fw-bold"><i class="bi bi-qr-code-scan me-2"></i>Scan QR Code</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><video id="qr-video" style="width:100%; height:300px;"></video><p class="mt-3">Point your camera at the QR code.</p></div></div></div></div>
+    <div class="modal fade" id="logModal" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="bi bi-terminal me-2"></i>Event Log</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div id="log-popup-content"></div></div></div></div></div>
+    <div class="modal fade" id="libraryModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-music-note-list me-2"></i>Upload Music</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="p-3 d-grid gap-3">
+
+          <!-- Upload MP3 File -->
+          <div>
+            <label for="songFileInput" id="uploadBtnLabel" class="btn btn-brand w-100">
+              <i class="bi bi-upload me-2"></i>Upload MP3 File
+            </label>
+            <input type="file" id="songFileInput" accept="audio/mpeg" class="d-none">
+          </div>
+
+          <!-- Upload via Custom URL -->
+          <div class="input-group">
+            <input type="url" id="customSongUrlInput" class="form-control" placeholder="Enter custom MP3 URL">
+            <button id="addCustomUrlBtn" class="btn btn-outline-success">
+              <i class="bi bi-plus-circle-fill"></i>
+            </button>
+          </div>
+
+          <!-- Optional: Progress bar for uploads -->
+          <div id="upload-progress-container" class="progress mb-3 d-none">
+            <div id="upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width:0%"></div>
+          </div>
+
+          <p class="text-white-50 text-center small">Select a file or provide a direct MP3 URL to upload.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <!-- QR Scanner Modal -->
+    <div class="modal fade" id="qrScannerModal" tabindex="-1" aria-labelledby="qrScannerLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white rounded-3">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-qr-code-scan me-2"></i>Scan QR Code</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <video id="qr-video" style="width:100%; height:300px;"></video>
+        <p class="mt-3">Point your camera at the QR code to join the party.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
     <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
+    
+    <script>
     // --- DOM & STATE ---
     const welcomeScreen = document.getElementById("welcome-screen"), playerScreen = document.getElementById("player-screen"),
     audio = document.getElementById("audioPlayer"), 
@@ -137,11 +555,11 @@
     let deviceId, currentUser, userData = { displayName: 'Guest' }, scanner;
     let playlistItems = [], lastKnownState = null, userInteracted = false;
     const SESSION_KEY = 'musicPartySession';
+// === UPDATED: Control both play/pause buttons ===
+const playPauseBtnCollapsed = document.getElementById('playPauseBtn-collapsed');
+const nextBtnCollapsed = document.getElementById('nextBtn-collapsed');
 
-    let peerConnections = {}; 
-    let dataChannels = {};
-    let guestPings = {}; 
-
+    let peerConnection, dataChannel;
     const iceConfiguration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
     const firebaseConfig = { apiKey: "AIzaSyCpOy4pqmtIsvJMtgoCzbQkLYTwR61cExk", authDomain: "probody-deec4.firebaseapp.com", databaseURL: "https://probody-deec4-default-rtdb.firebaseio.com", projectId: "probody-deec4", storageBucket: "probody-deec4.appspot.com", messagingSenderId: "704731000262", appId: "1:704731000262:web:4b3f4c4b8a0c4e71a8d6c7" };
     firebase.initializeApp(firebaseConfig);
@@ -157,13 +575,22 @@
             } else { window.location.href = '../login.html'; }
         });
         copyIdBtn.addEventListener('click', () => { navigator.clipboard.writeText(partyIdText.value).then(() => logToUI('Party ID copied!', 'success')); });
-        infoModal.addEventListener('show.bs.modal', () => {
-            if(isHost) {
-                const partyId = deviceId;
-                const joinUrl = `${window.location.origin}${window.location.pathname}?party=${partyId}`;
-                QRCode.toCanvas(qrCodeCanvas, joinUrl, { width: 200, color: { dark:"#FFFFFF", light:"#00000000" } }, e => e && console.error(e));
-            }
+        let qr;
+
+infoModal.addEventListener('show.bs.modal', () => {
+    if (isHost) {
+        const partyId = deviceId;
+
+        qr = new QRious({
+            element: qrCodeCanvas,   // canvas element
+            value: partyId,          // just partyId
+            size: 200,
+            level: 'M',
+            foreground: 'blue',
+            background: 'white'
         });
+    }
+});
         scanQrBtn.addEventListener('click', () => {
             const qrModal = new bootstrap.Modal(qrModalEl);
             qrModal.show();
@@ -171,18 +598,14 @@
         qrModalEl.addEventListener('shown.bs.modal', () => {
             scanner = new Instascan.Scanner({ video: qrVideo, mirror: false });
             scanner.addListener('scan', content => {
-                try {
-                    const url = new URL(content);
-                    const partyId = url.searchParams.get('party');
-                    if(partyId) {
-                        partyIdInput.value = partyId;
-                        bootstrap.Modal.getInstance(qrModalEl).hide();
-                    } else { logToUI('Invalid QR code scanned.', 'error'); }
-                } catch (e) {
-                     partyIdInput.value = content.trim();
-                     bootstrap.Modal.getInstance(qrModalEl).hide();
-                }
-            });
+    const partyId = content.trim();
+    if (partyId) {
+        partyIdInput.value = partyId;
+        bootstrap.Modal.getInstance(qrModalEl).hide();
+    } else {
+        logToUI('Invalid QR code scanned.', 'error');
+    }
+});
             Instascan.Camera.getCameras().then(cameras => {
                 if (cameras.length > 0) {
                     let backCamera = cameras.find(cam => cam.name.toLowerCase().includes('back')) || cameras[0];
@@ -210,7 +633,7 @@
     function listenToUserData(userId) { db.ref(`users/${userId}`).on('value', s => { userData = s.exists() ? s.val() : { displayName: 'Guest' }; if (playerScreen.classList.contains('active')) { userDisplayNameEl.textContent = getProcessedDisplayName(userData.displayName); } }); }
     function getProcessedDisplayName(displayName) { if (!displayName) return 'Guest'; if (displayName.includes(' ')) return displayName.split(' ')[0]; return displayName.substring(0, 5); }
 
-    // --- Party Logic (Multi-Guest Ready) ---
+    // --- Party Logic ---
     async function startHost() {
         isHost = true; show("player"); playerScreen.classList.add('is-host');
         const partyId = deviceId;
@@ -219,36 +642,34 @@
         partyRef = db.ref(`parties/${partyId}`); libraryRef = db.ref(`libraries/${deviceId}`);
         await partyRef.set({ hostId: deviceId, hostName: userData.displayName, guests: {} });
 
-        partyRef.child('guests').on('child_added', (guestSnapshot) => {
-            const guestId = guestSnapshot.key;
-            if (guestSnapshot.val().status === 'requesting' && !peerConnections[guestId]) {
-                logToUI(`${guestSnapshot.val().name} is connecting...`, 'info');
-                createPeerConnectionForGuest(guestId);
+        peerConnection = new RTCPeerConnection(iceConfiguration);
+        peerConnection.onicecandidate = e => e.candidate && partyRef.child('iceCandidates/host').push(e.candidate.toJSON());
+        dataChannel = peerConnection.createDataChannel("partySync");
+        dataChannel.onopen = () => {
+            logToUI('Guest connected!', 'success');
+            pingDisplay.classList.remove('d-none');
+            syncInterval = setInterval(() => { broadcastState(); dataChannel.send(JSON.stringify({ type: 'ping', payload: Date.now() })); }, 2000);
+            sendFullStateToPeers();
+        };
+        dataChannel.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'pong') {
+                pingValue.textContent = Date.now() - data.payload;
             }
+        };
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        await partyRef.child('offer').set({ sdp: offer.sdp, type: offer.type });
+
+        partyRef.child('answer').on('value', async s => s.exists() && !peerConnection.currentRemoteDescription && await peerConnection.setRemoteDescription(new RTCSessionDescription(s.val())));
+        partyRef.child('iceCandidates/guest').on('child_added', s => peerConnection.remoteDescription && s.exists() && peerConnection.addIceCandidate(new RTCIceCandidate(s.val())));
+        partyRef.child('guests').on('value', s => {
+            const guestList = s.val(); const count = guestList ? Object.keys(guestList).length : 0;
+            guestCountEl.textContent = count; modalGuestCountEl.textContent = count;
+            modalGuestListEl.innerHTML = guestList ? Object.values(guestList).map(g => `<li>${g.name}</li>`).join('') : '<li>No guests connected</li>';
+            if(count === 0 && peerConnection.currentRemoteDescription) { partyRef.update({ answer: null, 'iceCandidates/guest': null }); }
         });
-        partyRef.child('guests').on('value', s => updateGuestListUI(s.val()));
         libraryRef.on('value', s => updatePlaylist(s.exists() ? Object.keys(s.val()).map(key => ({ ...s.val()[key], songId: key })) : []));
-        syncInterval = setInterval(broadcastState, 2000);
-    }
-
-    async function createPeerConnectionForGuest(guestId) {
-        peerConnections[guestId] = new RTCPeerConnection(iceConfiguration);
-        const pc = peerConnections[guestId];
-        pc.onicecandidate = e => e.candidate && partyRef.child(`guests/${guestId}/iceCandidates/host`).push(e.candidate.toJSON());
-        
-        dataChannels[guestId] = pc.createDataChannel("partySync");
-        const dc = dataChannels[guestId];
-        dc.onopen = () => { logToUI(`Connection with ${guestId.substring(0,5)} established!`, 'success'); sendFullStateToPeers(guestId); };
-        dc.onmessage = (event) => { const data = JSON.parse(event.data); if (data.type === 'pong') { guestPings[guestId] = Date.now() - data.payload; } };
-        
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        await partyRef.child(`guests/${guestId}/offer`).set({ sdp: offer.sdp, type: offer.type });
-
-        partyRef.child(`guests/${guestId}/answer`).on('value', async s => {
-            if (s.exists() && !pc.currentRemoteDescription) { await pc.setRemoteDescription(new RTCSessionDescription(s.val())); }
-        });
-        partyRef.child(`guests/${guestId}/iceCandidates/guest`).on('child_added', s => pc.remoteDescription && s.exists() && pc.addIceCandidate(new RTCIceCandidate(s.val())));
     }
 
     async function startGuest(partyId) {
@@ -256,39 +677,33 @@
         connectionOverlay.classList.remove('d-none'); connectionStatus.textContent = 'Connecting...';
         partyRef = db.ref(`parties/${partyId}`);
         const s = await partyRef.once('value');
-        if (!s.exists()) { alert('Party not found!'); return disconnect(); }
+        if (!s.exists() || !s.child('offer').exists()) { alert('Party not found!'); return disconnect(); }
         
-        await partyRef.child(`guests/${deviceId}`).set({ name: userData.displayName, status: 'requesting' });
-
+        const hostData = s.val(); modalHostNameEl.textContent = hostData.hostName || 'Host';
         peerConnection = new RTCPeerConnection(iceConfiguration);
-        peerConnection.onicecandidate = e => e.candidate && partyRef.child(`guests/${deviceId}/iceCandidates/guest`).push(e.candidate.toJSON());
+        peerConnection.onicecandidate = e => e.candidate && partyRef.child('iceCandidates/guest').push(e.candidate.toJSON());
         peerConnection.ondatachannel = event => {
             dataChannel = event.channel;
-            dataChannel.onmessage = e => handleStateSync(JSON.parse(e.data));
+            dataChannel.onmessage = e => { const data = JSON.parse(e.data); if (data.type === 'ping') { dataChannel.send(JSON.stringify({ type: 'pong', payload: data.payload })); } else { handleStateSync(data); } };
             dataChannel.onopen = () => { logToUI('Connected to host!', 'success'); connectionOverlay.classList.add('d-none'); localStorage.setItem(SESSION_KEY, JSON.stringify({ partyId, isHost: false })); };
             dataChannel.onclose = () => { logToUI('Host disconnected.', 'error'); disconnect(); };
         };
 
-        partyRef.child(`guests/${deviceId}/offer`).on('value', async s => {
-            if(s.exists() && !peerConnection.remoteDescription) {
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(s.val()));
-                const answer = await peerConnection.createAnswer();
-                await peerConnection.setLocalDescription(answer);
-                await partyRef.child(`guests/${deviceId}/answer`).set({ sdp: answer.sdp, type: answer.type });
-                partyRef.child(`guests/${deviceId}/iceCandidates/host`).on('child_added', s => peerConnection.remoteDescription && s.exists() && peerConnection.addIceCandidate(new RTCIceCandidate(s.val())));
-            }
-        });
-        
-        const hostData = s.val(); modalHostNameEl.textContent = hostData.hostName || 'Host';
-        partyRef.child('guests').on('value', s => { updateGuestListUI(s.val()); });
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(hostData.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        await partyRef.child('answer').set({ sdp: answer.sdp, type: answer.type });
+        partyRef.child('iceCandidates/host').on('child_added', s => peerConnection.remoteDescription && s.exists() && peerConnection.addIceCandidate(new RTCIceCandidate(s.val())));
+        await partyRef.child(`guests/${deviceId}`).set({ name: userData.displayName });
+        partyRef.child('guests').on('value', s => { const guestList = s.val(); const count = guestList ? Object.keys(guestList).length : 0; guestCountEl.textContent = count; modalGuestCountEl.textContent = count; modalGuestListEl.innerHTML = guestList ? Object.values(guestList).map(g => `<li>${g.name}</li>`).join('') : ''; });
         partyIdText.value = partyId; userDisplayNameEl.textContent = getProcessedDisplayName(userData.displayName);
     }
 
     async function disconnect() {
         clearInterval(syncInterval); pingDisplay.classList.add('d-none');
         localStorage.removeItem(SESSION_KEY);
-        Object.values(dataChannels).forEach(dc => dc.close()); Object.values(peerConnections).forEach(pc => pc.close());
-        if(!isHost && partyRef) { await partyRef.child(`guests/${deviceId}`).remove(); }
+        dataChannel?.close(); peerConnection?.close();
+        if(!isHost && partyRef) { const updates = {}; updates[`guests/${deviceId}`] = null; updates[`answer`] = null; updates[`iceCandidates/guest`] = null; await partyRef.update(updates); }
         if (isHost && partyRef) await partyRef.remove();
         partyRef?.off(); libraryRef?.off();
         isHost = false; audio.pause(); audio.src = ''; document.body.classList.remove('is-playing');
@@ -298,33 +713,10 @@
     }
 
     // --- Playback & Sync Logic ---
-    function broadcastState() {
-        if (!isHost) return;
-        const state = { type: 'state', payload: { trackIndex: currentTrackIndex, time: audio.currentTime, isPaused: audio.paused }};
-        const ping = { type: 'ping', payload: Date.now() };
-        for (const guestId in dataChannels) {
-            if (dataChannels[guestId].readyState === 'open') {
-                dataChannels[guestId].send(JSON.stringify(state));
-                dataChannels[guestId].send(JSON.stringify(ping));
-            }
-        }
-    }
-    function sendFullStateToPeers(guestId) {
-        if (!isHost) return;
-        const state = { type: 'fullSync', payload: { playlist: playlistItems, trackIndex: currentTrackIndex, time: audio.currentTime, isPaused: audio.paused }};
-        if(guestId && dataChannels[guestId]?.readyState === 'open') {
-            dataChannels[guestId].send(JSON.stringify(state));
-        } else {
-            for (const id in dataChannels) {
-                if (dataChannels[id].readyState === 'open') {
-                    dataChannels[id].send(JSON.stringify(state));
-                }
-            }
-        }
-    }
+    function broadcastState() { if (!isHost || dataChannel?.readyState !== 'open') return; dataChannel.send(JSON.stringify({ type: 'state', payload: { trackIndex: currentTrackIndex, time: audio.currentTime, isPaused: audio.paused }})); }
+    function sendFullStateToPeers() { if (!isHost || dataChannel?.readyState !== 'open') return; dataChannel.send(JSON.stringify({ type: 'fullSync', payload: { playlist: playlistItems, trackIndex: currentTrackIndex, time: audio.currentTime, isPaused: audio.paused }})); }
     
     function handleStateSync(data) {
-        if(data.type === 'ping') { return dataChannel.send(JSON.stringify({ type: 'pong', payload: data.payload })); }
         const state = data.payload; lastKnownState = state;
         if (data.type === 'fullSync') {
             updatePlaylist(state.playlist);
@@ -339,27 +731,70 @@
         if (state.isPaused && !audio.paused) audio.pause();
         else if (!state.isPaused && audio.paused && userInteracted) audio.play();
     }
-    function playTrack(index, isHostAction) {
-        if (!playlistItems || index >= playlistItems.length || index < 0) return;
-        currentTrackIndex = index;
-        const track = playlistItems[index];
-        if (!track?.url) { if (isHost) nextBtn.click(); return; }
-        
-        footerSongTitle.textContent = track.title || 'Untitled';
-        footerSongArtist.textContent = track.artist || 'Unknown Artist';
-        const hasArt = !!track.albumArt;
-        footerAlbumArt.style.backgroundImage = hasArt ? `url(${track.albumArt})` : '';
-        
-        document.querySelectorAll('#library-list .list-group-item').forEach((item, idx) => item.classList.toggle('active', idx === index));
 
-        if (audio.src !== track.url) {
-            audio.src = track.url; audio.load();
-            const onCanPlay = () => { const shouldPlay = isHostAction || (lastKnownState && !lastKnownState.isPaused); if (shouldPlay && userInteracted) audio.play().catch(e => logToUI('Playback blocked.', 'error')); };
-            audio.addEventListener('canplay', onCanPlay, { once: true });
-            audio.addEventListener('error', () => { logToUI(`Error loading ${track.title}. Skipping.`, 'error'); if(isHost) nextBtn.click() }, { once: true });
-        } else if (isHostAction) { audio.play(); }
+    function playTrack(index, isHostAction) {
+    if (!playlistItems || index >= playlistItems.length || index < 0) {
+        if (isHost) {
+            broadcastState();
+        }
+        return;
     }
 
+    currentTrackIndex = index;
+    const track = playlistItems[index];
+
+    if (!track?.url) {
+        logToUI(`Skipping invalid track at index ${index}.`, 'error');
+        if (isHost) {
+            nextBtn.click();
+        }
+        return;
+    }
+    
+    footerSongTitle.textContent = track.title || 'Untitled';
+    footerSongArtist.textContent = track.artist || 'Unknown Artist';
+    const hasArt = !!track.albumArt;
+        if (hasArt) {
+            footerAlbumArt.classList.remove('generated-art');
+            footerAlbumArt.style.backgroundImage = `url(${track.albumArt})`;
+            footerAlbumArt.textContent = ''; // Clear any initials
+        } else {
+            // Generate art if no album art is found
+            const art = generateArtForSong(track.title || 'Untitled');
+            footerAlbumArt.classList.add('generated-art');
+            footerAlbumArt.style.backgroundImage = art.gradient;
+            footerAlbumArt.textContent = art.initials;
+        }
+        
+    document.querySelectorAll('#library-list .list-group-item').forEach((item, idx) => {
+        item.classList.toggle('active', idx === index);
+    });
+
+    if (audio.src !== track.url) {
+        audio.src = track.url;
+        audio.load();
+        
+        const onCanPlay = () => {
+            const shouldPlay = isHostAction || (lastKnownState && !lastKnownState.isPaused);
+            if (shouldPlay && userInteracted) {
+                audio.play().catch(e => logToUI('Playback was blocked by the browser.', 'error'));
+            }
+        };
+        audio.addEventListener('canplay', onCanPlay, { once: true });
+        audio.addEventListener('error', () => {
+            logToUI(`Error loading ${track.title}. Skipping.`, 'error');
+            if (isHost) {
+                nextBtn.click();
+            }
+        }, { once: true });
+    } else if (isHostAction) {
+        audio.play();
+    }
+
+    if (isHostAction) {
+        broadcastState();
+    }
+}
     // --- UI, Library & Uploads ---
     function show(screen) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(screen + "-screen").classList.add('active'); }
     function updatePlaylist(newPlaylist) {
@@ -373,19 +808,194 @@
         if (isHost && wasEmpty && playlistItems.length > 0) playTrack(0, true);
         if (isHost) sendFullStateToPeers();
     }
-    function updateGuestListUI(guestList) {
-        const count = guestList ? Object.keys(guestList).length : 0;
-        guestCountEl.textContent = count; modalGuestCountEl.textContent = count;
-        modalGuestListEl.innerHTML = guestList ? Object.keys(guestList).map(guestId => `<li>${guestList[guestId].name} <span class="text-white-50 ms-2">(${guestPings[guestId] || '-'}ms)</span></li>`).join('') : '<li>No guests connected</li>';
-        if (count > 0) pingDisplay.classList.remove('d-none');
-        else pingDisplay.classList.add('d-none');
+
+    function handleFileUpload(file) {
+    if (!isHost || !libraryRef) {
+        alert('Library not ready. Please wait.');
+        return;
     }
-    function handleFileUpload(file) { /* ... same as previous version ... */ }
-    function handleAddCustomUrl() { /* ... same as previous version ... */ }
-    function deleteSong(songId, storagePath) { /* ... same as previous version ... */ }
-    function parseSongInfo(filename) { const c = decodeURIComponent(filename.replace(/\.[^/.]+$/, "")); return c.includes(' - ') ? { artist: c.split(' - ')[0].trim(), title: c.split(' - ').slice(1).join(' - ').trim() } : { artist: 'Unknown Artist', title: c }; }
+    if (!file || !file.type.startsWith('audio/mpeg')) {
+        alert('Please select a valid MP3 file.');
+        return;
+    }
+
+    const songId = libraryRef.push().key;
+    const storageRef = storage.ref(`uploads/${deviceId}/${songId}.mp3`);
+    const uploadTask = storageRef.put(file);
+
+    uploadProgressContainer.classList.remove('d-none');
+    uploadProgressBar.style.width = '0%';
+    alert(`Uploading: ${file.name}`);
+
+    uploadTask.on('state_changed',
+        snapshot => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            uploadProgressBar.style.width = progress + '%';
+            console.log(`Upload progress: ${Math.floor(progress)}%`);
+        },
+        error => {
+            console.error('Upload failed:', error);
+            alert('Upload failed: ' + error.message);
+            uploadProgressContainer.classList.add('d-none');
+        },
+        () => {
+            uploadTask.snapshot.ref.getDownloadURL().then(url => {
+                const songInfo = parseSongInfo(file.name);
+                const songData = {
+                    ...songInfo,
+                    url,
+                    storagePath: uploadTask.snapshot.ref.fullPath,
+                    uploaderUid: currentUser.uid
+                };
+                libraryRef.child(songId).set(songData)
+                    .then(() => {
+                        alert(`Upload complete! ${songInfo.artist} - ${songInfo.title}`);
+                        console.log('Upload successful:', songData);
+                        setTimeout(() => {
+                            uploadProgressContainer.classList.add('d-none');
+                            uploadProgressBar.style.width = '0%';
+                        }, 1000);
+                    })
+                    .catch(err => {
+                        console.error('Error saving song metadata:', err);
+                        alert('Error saving metadata: ' + err.message);
+                    });
+            });
+        }
+    );
+}
+function handleAddCustomUrl() {
+    if (!isHost || !libraryRef) {
+        alert("Library not ready. Please wait.");
+        return;
+    }
+
+    // Get the URL from the input field
+    const urlInput = document.getElementById("customSongUrlInput");
+    if (!urlInput) {
+        alert("URL input field not found.");
+        return;
+    }
+
+    const url = urlInput.value.trim();
+    if (!url) {
+        alert("Invalid URL.");
+        return;
+    }
+
+    const filename = decodeURIComponent(url.split("/").pop().split("?")[0]);
+    const meta = parseSongInfo(filename);
+    const songId = libraryRef.push().key;
+
+    libraryRef.child(songId).set({
+        title: meta.title,
+        artist: meta.artist,
+        url: url,
+        storagePath: null,
+        duration: 0
+    })
+    .then(() => alert(`Custom song added: ${meta.artist} - ${meta.title}`))
+    .catch(err => alert("Error adding song: " + err.message));
+}
+function deleteSong(songId, storagePath) {
+    if (!isHost || !songId || !libraryRef) return;
+
+    // 1. Delete from Firebase Realtime Database
+    libraryRef.child(songId).remove()
+        .then(() => {
+            logToUI("Song removed from library", "success");
+        })
+        .catch(err => logToUI("Error deleting song: " + err.message, "error"));
+
+    // 2. Delete from Firebase Storage if file exists
+    if (storagePath) {
+        storage.ref(storagePath).delete()
+            .then(() => logToUI("File removed from storage", "success"))
+            .catch(err => logToUI("Storage delete failed: " + err.message, "error"));
+    }
+}
+function listenToLibrary() {
+    // Clear old playlist
+    playlistEl.innerHTML = "";
+
+    // When a song is added
+    libraryRef.on("child_added", snapshot => {
+        const songId = snapshot.key;
+        const song = snapshot.val();
+        renderSong(songId, song);
+    });
+
+    // When a song is changed (metadata update)
+    libraryRef.on("child_changed", snapshot => {
+        const songId = snapshot.key;
+        const song = snapshot.val();
+        const oldEl = document.getElementById(`song-${songId}`);
+        if (oldEl) oldEl.remove();
+        renderSong(songId, song);
+    });
+
+    // When a song is deleted
+    libraryRef.on("child_removed", snapshot => {
+        const songId = snapshot.key;
+        const el = document.getElementById(`song-${songId}`);
+        if (el) el.remove();
+    });
+}
+function renderSong(songId, song) {
+    const li = document.createElement("li");
+    li.id = `song-${songId}`;
+    li.className = "list-group-item d-flex justify-content-between align-items-center";
+
+    li.innerHTML = `
+        <div>
+            <strong>${song.title || "Unknown Title"}</strong><br>
+            <small>${song.artist || "Unknown Artist"}</small>
+        </div>
+        ${isHost ? `
+        <button class="btn btn-sm btn-danger" onclick="deleteSong('${songId}', '${song.storagePath || ""}')">
+            Delete
+        </button>` : ""}
+    `;
+
+    playlistEl.appendChild(li);
+}
+
+function parseSongInfo(filename) { const c = decodeURIComponent(filename.replace(/\.[^/.]+$/, "")); return c.includes(' - ') ? { artist: c.split(' - ')[0].trim(), title: c.split(' - ').slice(1).join(' - ').trim() } : { artist: 'Unknown Artist', title: c }; }
     function formatTime(s) { const m = Math.floor((s||0)/60); return `${m}:${(Math.floor((s||0)%60))<10?'0':''}${Math.floor((s||0)%60)}`; }
     function logToUI(m, t='info') { /* ... same as previous version ... */ }
+    function generateArtForSong(title) {
+        const colorPalette = [
+            ['#00c6ff', '#0072ff'], ['#ff6e7f', '#bfe9ff'], ['#f7971e', '#ffd200'],
+            ['#8e2de2', '#4a00e0'], ['#11998e', '#38ef7d'], ['#d66d75', '#e29587'],
+            ['#43cea2', '#185a9d'], ['#ff5f6d', '#ffc371'], ['#c0c0aa', '#1cefff'],
+            ['#ee0979', '#ff6a00'], ['#f472b6', '#3b82f6'], ['#fde047', '#ef4444']
+        ];
+        
+        // Simple hash function to get a consistent number from a string
+        let hash = 0;
+        for (let i = 0; i < title.length; i++) {
+            const char = title.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash |= 0; // Convert to 32bit integer
+        }
+        
+        // Pick a deterministic color pair from the palette
+        const colors = colorPalette[Math.abs(hash) % colorPalette.length];
+        
+        // Generate initials
+        const words = title.split(' ');
+        let initials = words[0] ? words[0][0] : '';
+        if (words.length > 1 && words[1]) {
+            initials += words[1][0];
+        } else if (title.length > 1) {
+            initials = title.substring(0, 2);
+        }
+
+        return {
+            gradient: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
+            initials: initials.toUpperCase()
+        };
+    }
     
     // --- Event Listeners ---
     hostBtn.onclick = startHost;
@@ -399,10 +1009,22 @@
     songFileInput.addEventListener('change', e => e.target.files[0] && handleFileUpload(e.target.files[0]));
 
     const playIcon='<i class="bi bi-play-circle-fill"></i>', pauseIcon='<i class="bi bi-pause-circle-fill"></i>';
-    audio.onplay = () => { if (isHost) playPauseBtn.innerHTML = pauseIcon; document.body.classList.add('is-playing'); };
-    audio.onpause = () => { if (isHost) playPauseBtn.innerHTML = pauseIcon; document.body.classList.remove('is-playing'); };
-    audio.onended = () => { if (isHost) nextBtn.click(); };
-    audio.ontimeupdate = ()=> {
+    audio.onplay = () => { 
+    if (isHost) {
+        playPauseBtn.innerHTML = pauseIcon; 
+        playPauseBtnCollapsed.innerHTML = pauseIcon; 
+    }
+    document.body.classList.add('is-playing'); 
+};
+audio.onpause = () => { 
+    if (isHost) {
+        playPauseBtn.innerHTML = playIcon; 
+        playPauseBtnCollapsed.innerHTML = playIcon;
+    }
+    document.body.classList.remove('is-playing'); 
+};
+audio.onended = () => { if (isHost) nextBtn.click(); };
+  audio.ontimeupdate = ()=> {
         const progress = (audio.currentTime / audio.duration) * 100 || 0;
         seekBar.style.setProperty('--seek-progress', `${progress}%`);
         seekBar.value = progress;
@@ -416,7 +1038,19 @@
         }
         broadcastState();
     };
+audio.onloadedmetadata = ()=> {
+    durationEl.textContent = formatTime(audio.duration);
+};
+
+
+
+// === NEW: Hook up the collapsed buttons ===
+playPauseBtnCollapsed.onclick = () => playPauseBtn.click();
+nextBtnCollapsed.onclick = () => nextBtn.click();
+
+
     document.body.addEventListener('click', () => { if(!userInteracted) { userInteracted = true; if(lastKnownState && !lastKnownState.isPaused) audio.play().catch(()=>{}); logToUI('Audio context unlocked.', 'success'); } }, { once: true });
 </script>
 </body>
 </html>
+  
