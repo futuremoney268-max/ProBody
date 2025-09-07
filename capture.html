@@ -5,13 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>ProBody | Capture</title>
 
-  <!-- Bootstrap CSS -->
+  <!-- Libraries -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Google Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -21,368 +17,144 @@
       --accent-secondary: #C73866;
       --accent-gradient: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
       --text-color: #EAEAEA;
-      --text-muted: #888888;
-      --glass-bg: rgba(30, 30, 30, 0.5);
+      --text-muted: #9E9E9E;
+      --glass-bg: rgba(30, 30, 30, 0.6);
       --glass-border: 1px solid rgba(255, 255, 255, 0.1);
       --glass-blur: blur(16px);
       --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
       --font-family: 'Inter', sans-serif;
+      --focus-ring: 0 0 0 3px rgba(138, 43, 226, 0.4);
     }
-
     body {
-      background: var(--bg-gradient);
-      color: var(--text-color);
-      font-family: var(--font-family);
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
+      background: var(--bg-gradient); color: var(--text-color); font-family: var(--font-family);
+      margin: 0; padding: 0 0 calc(120px + env(safe-area-inset-bottom)); overflow-x: hidden;
       -webkit-tap-highlight-color: transparent;
     }
-
-    /* --- TOP BAR --- */
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(18,18,18,0.7);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      padding: 1rem 1.5rem;
-      border-bottom: var(--glass-border);
-      position: sticky;
-      top: 0;
-      z-index: 200;
-    }
-    
-    .top-bar .page-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .counter-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.8rem;
-      font-weight: 500;
-      background: var(--glass-bg);
-      padding: 0.4rem 0.8rem;
-      border-radius: 50px;
-      border: var(--glass-border);
-    }
-    .counter-badge i { width: 14px; height: 14px; }
-
+    /* --- TOP BAR & CONTROLS --- */
+    .top-bar { display: flex; justify-content: space-between; align-items: center; background: rgba(18,18,18,0.7); backdrop-filter: var(--glass-blur); padding: 1rem 1.5rem; border-bottom: var(--glass-border); position: sticky; top: 0; z-index: 200; }
+    .top-bar .page-title { font-size: 1.5rem; font-weight: 700; margin: 0; }
     .top-icons { display: flex; align-items: center; gap: 0.75rem; }
-    .top-icons button {
-      background: var(--glass-bg);
-      border: var(--glass-border);
-      color: var(--text-color);
-      border-radius: 50%;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-    .top-icons button:hover {
-      background: rgba(255, 255, 255, 0.1);
-      transform: translateY(-2px);
-    }
+    .top-icons button, .top-icons .btn-import-label { background: var(--glass-bg); border: var(--glass-border); color: var(--text-color); border-radius: 50%; width: 44px; height: 44px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s ease; position: relative; }
+    .top-icons button:hover, .top-icons .btn-import-label:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
     .top-icons i { width: 20px; height: 20px; }
-
-    .notification-badge {
-      position: absolute;
-      top: -4px; right: -4px;
-      background: var(--accent-secondary);
-      font-size: 0.7rem;
-      font-weight: 600;
-      border-radius: 50%;
-      width: 18px; height: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid #121212;
-    }
-
-    /* --- CAMERA VIEW --- */
-    #cameraContainer {
-      position: relative;
-      width: clamp(300px, 92vw, 480px);
-      margin: 1.5rem auto;
-      aspect-ratio: 3 / 4;
-      border-radius: 2rem;
-      overflow: hidden;
-      background: #000;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-    #video, #overlay { width: 100%; height: 100%; object-fit: cover; }
-    #overlay { position: absolute; top: 0; left: 0; opacity: 0.2; pointer-events: none; }
-
-    /* --- TAG SELECTOR --- */
+    .notification-badge { position: absolute; top: -4px; right: -4px; background: var(--accent-secondary); font-size: 0.7rem; font-weight: 600; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 2px solid #121212; }
+    
+    /* --- CAMERA & CONTROLS --- */
+    #cameraContainer { position: relative; width: clamp(300px, 92vw, 480px); margin: 1.5rem auto; aspect-ratio: 3 / 4; border-radius: 2rem; overflow: hidden; background: #000; box-shadow: var(--shadow); border: 1px solid rgba(255, 255, 255, 0.15); }
+    #video { width: 100%; height: 100%; object-fit: cover; }
+    #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.3; pointer-events: none; transition: opacity 0.3s ease; }
     .dropdown { display: flex; justify-content: center; margin: 1rem 0; }
-    .dropdown-toggle {
-      background: var(--glass-bg) !important;
-      backdrop-filter: var(--glass-blur);
-      border: var(--glass-border) !important;
-      color: var(--text-color) !important;
-      padding: 0.75rem 1.5rem;
-      border-radius: 50px;
-      font-size: 1rem;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .dropdown-toggle:hover { transform: scale(1.05); }
-    .dropdown-toggle i { width: 18px; height: 18px; }
-    .dropdown-menu {
-      background: var(--glass-bg);
-      backdrop-filter: var(--glass-blur);
-      border: var(--glass-border);
-      border-radius: 1rem;
-      padding: 0.5rem;
-    }
-    .dropdown-item {
-      color: var(--text-color);
-      font-weight: 500;
-      padding: 0.75rem 1.25rem;
-      border-radius: 0.75rem;
-      transition: all 0.2s ease;
-    }
-    .dropdown-item:hover, .dropdown-item:focus {
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--text-color);
-    }
-
-    /* --- CONTROL BAR --- */
-    .control-bar {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      z-index: 100;
-      background: var(--glass-bg);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      padding: 0.75rem;
-      border-radius: 50px;
-      border: var(--glass-border);
-      box-shadow: var(--shadow);
-    }
-
-    .control-bar button {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s ease-out;
-      color: var(--text-color);
-      position: relative;
-    }
-    .control-bar .btn-light {
-      background: transparent;
-      width: 64px;
-      height: 64px;
-    }
+    .dropdown .dropdown-toggle { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: var(--glass-border); color: var(--text-color); padding: 0.75rem 1.5rem; border-radius: 50px; }
+    .dropdown .dropdown-menu { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: var(--glass-border); }
+    .dropdown .dropdown-item { color: var(--text-color); }
+    .dropdown .dropdown-item:hover { background: rgba(255, 255, 255, 0.1); }
+    .control-bar { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); display: flex; gap: 1rem; align-items: center; z-index: 100; background: var(--glass-bg); backdrop-filter: var(--glass-blur); padding: 0.75rem; border-radius: 50px; border: var(--glass-border); box-shadow: var(--shadow); }
+    .control-bar button { display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 50%; border: none; cursor: pointer; transition: all 0.2s ease-out; color: var(--text-color); position: relative; }
+    .control-bar .btn-light { background: transparent; width: 64px; height: 64px; }
     .control-bar .btn-light:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
-
-    .control-bar .btn-danger {
-      background: var(--accent-gradient);
-      width: 80px;
-      height: 80px;
-      box-shadow: 0 4px 20px rgba(138, 43, 226, 0.4);
-      animation: pulse-capture 2s infinite;
-    }
+    .control-bar .btn-danger { background: var(--accent-gradient); width: 80px; height: 80px; box-shadow: 0 4px 20px rgba(138, 43, 226, 0.4); animation: pulse-capture 2s infinite; }
     .control-bar .btn-danger:hover { transform: scale(1.08); animation-play-state: paused; }
-    .control-bar i { width: 24px; height: 24px; }
-    .btn-danger i { width: 32px; height: 32px; }
-
-    #timerLabel {
-      position: absolute;
-      bottom: 8px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-color);
-    }
-
-    @keyframes pulse-capture {
-      0% { transform: scale(1); box-shadow: 0 4px 20px rgba(138, 43, 226, 0.4); }
-      50% { transform: scale(1.05); box-shadow: 0 6px 30px rgba(138, 43, 226, 0.6); }
-      100% { transform: scale(1); box-shadow: 0 4px 20px rgba(138, 43, 226, 0.4); }
-    }
-
-    /* --- COUNTDOWN --- */
-    #countdown {
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: clamp(6rem, 25vw, 10rem);
-      font-weight: 700;
-      color: var(--text-color);
-      text-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
-      z-index: 9999;
-      animation: pulse-countdown 1s infinite;
-      pointer-events: none;
-    }
-    @keyframes pulse-countdown {
-      0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-      50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.9; }
-      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    }
-
-    /* --- PREVIEW MODAL --- */
-    .modal-content.preview-modal {
-      background: var(--glass-bg);
-      backdrop-filter: var(--glass-blur);
-      border: var(--glass-border);
-      border-radius: 1.5rem;
-      box-shadow: var(--shadow);
-    }
-    .preview-modal img { border-radius: 1rem; }
+    #timerLabel { position: absolute; bottom: 8px; font-size: 0.75rem; font-weight: 600; }
+    #countdown { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: clamp(6rem, 25vw, 10rem); font-weight: 700; color: var(--text-color); text-shadow: 0 5px 25px rgba(0, 0, 0, 0.5); z-index: 9999; animation: pulse-countdown 1s infinite; pointer-events: none; }
+    
+    /* UNIFIED MODAL STYLES */
+    .modal-content.glass { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: var(--glass-border); border-radius: 1.5rem; box-shadow: var(--shadow); color: var(--text-color); }
+    .modal-header { border-bottom: var(--glass-border); }
     .modal-footer { border-top: var(--glass-border); }
-    .modal-footer button {
-      border-radius: 50px;
-      padding: 0.75rem 1.5rem;
-      font-weight: 600;
-      flex-grow: 1;
-      border: none;
-      transition: all 0.2s ease;
-    }
+    .modal-footer button { border-radius: 50px; padding: 0.75rem 1.5rem; font-weight: 600; flex-grow: 1; border: none; transition: all 0.2s ease; }
     .btn-secondary { background: rgba(255,255,255,0.1); color: var(--text-color); }
     .btn-secondary:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
     .btn-success { background: var(--accent-gradient); color: white; }
     .btn-success:hover { transform: translateY(-2px); filter: brightness(1.1); }
-    
-    /* --- PROGRESS BAR --- */
-    #uploadProgressContainer { border-radius: 50px; background: var(--glass-bg); border: var(--glass-border); }
-    #uploadProgressBar { background: var(--accent-gradient); font-weight: 600; transition: width 0.4s ease; }
+    #previewImage { border-radius: 1rem; max-height: 50vh; object-fit: contain; }
+    .form-control, .form-select { background: rgba(0,0,0,0.3); border: var(--glass-border); color: var(--text-color); border-radius: 0.75rem; }
+    .form-control:focus, .form-select:focus { background: rgba(0,0,0,0.4); color: var(--text-color); border-color: var(--accent-primary); box-shadow: var(--focus-ring); }
+    .progress { border-radius: 50px; background: rgba(0,0,0,0.3); border: var(--glass-border); padding: 0; }
+    .progress-bar { background: var(--accent-gradient); font-weight: 600; transition: width 0.4s ease; }
 
-    /* --- NOTIFICATION SIDEBAR --- */
-    .notification-bar {
-      position: fixed;
-      right: -100%; top: 0; bottom: 0;
-      width: clamp(300px, 85vw, 400px);
-      background: rgba(18,18,18,0.8);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      border-left: var(--glass-border);
-      padding: 1.5rem;
-      z-index: 300;
-      transition: right 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-      display: flex;
-      flex-direction: column;
-    }
+    /* NOTIFICATION BAR */
+    .notification-bar { position: fixed; right: -100%; top: 0; bottom: 0; width: clamp(300px, 85vw, 400px); background: rgba(18,18,18,0.8); backdrop-filter: var(--glass-blur); border-left: var(--glass-border); padding: 1.5rem; z-index: 300; transition: right 0.4s cubic-bezier(0.25, 1, 0.5, 1); display: flex; flex-direction: column; }
     .notification-bar.active { right: 0; box-shadow: var(--shadow); }
-    
-    .notification-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-    }
+    .notification-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
     .notification-header h3 { font-size: 1.5rem; font-weight: 700; margin: 0; }
-    .toggle-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); }
-    .toggle-btn:before { content: '×'; font-size: 2rem; }
+    .toggle-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0; }
+    .toggle-btn:before { content: '×'; font-size: 2rem; line-height: 1; }
+    .notification-list { flex-grow: 1; overflow-y: auto; }
+    .notification { background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: 1rem; margin-bottom: 1rem; border: var(--glass-border); border-left-width: 4px; animation: fadeIn 0.5s ease; }
+    .notification.success { border-left-color: #28a745; }
+    .notification.error { border-left-color: var(--accent-secondary); }
     
-    .notification-list { flex-grow: 1; overflow-y: auto; padding-right: 1rem; margin-right: -1rem; }
-    
-    .notification {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 1rem;
-      border-radius: 1rem;
-      margin-bottom: 1rem;
-      border: var(--glass-border);
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-      animation: fadeIn 0.5s ease;
-    }
-    .notification.success { border-left: 4px solid #28a745; }
-    .notification.error { border-left: 4px solid var(--accent-secondary); }
-    .notification.info { border-left: 4px solid var(--accent-primary); }
-
-    .notification-image { width: 48px; height: 48px; object-fit: cover; border-radius: 0.75rem; }
-    .notification strong { display: block; font-size: 1rem; font-weight: 600; }
-    .notification p { margin: 0.25rem 0 0; font-size: 0.9rem; line-height: 1.4; color: var(--text-muted); }
-    .notification .close-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem; padding: 0; margin-left: auto; }
-    
+    @keyframes pulse-capture { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    @keyframes pulse-countdown { 0% { opacity: 1; } 50% { opacity: 0.9; } 100% { opacity: 1; } }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    #canvas { display: none; }
   </style>
-
 </head>
 <body>
-  <!-- Top Bar -->
+
+  <!-- Top Bar with Import Button -->
   <div class="top-bar">
-    <h2 class="page-title">
-      ProBody
-      <span id="globalCounter" class="counter-badge">
-        <i data-lucide="globe"></i>
-        <span id="globalCount">0</span>
-      </span>
-    </h2>
+    <h2 class="page-title">Capture</h2>
     <div class="top-icons">
-      <button id="flashBtn" onclick="toggleFlash()" title="Toggle Flash">
-        <i data-lucide="zap"></i>
-      </button>
+      <button id="flashBtn" onclick="toggleFlash()" title="Toggle Flash"><i data-lucide="zap"></i></button>
       <button id="notificationToggle" onclick="toggleNotificationBar()" title="Notifications">
         <i data-lucide="bell"></i>
         <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
       </button>
+      <label for="photoInput" class="btn-import-label" title="Import from Gallery"><i data-lucide="upload"></i></label>
+      <input type="file" id="photoInput" accept="image/*" class="d-none">
     </div>
   </div>
 
-  <!-- Camera -->
-  <div id="cameraContainer">
-    <video id="video" autoplay playsinline></video>
-    <img id="overlay" alt="overlay" />
-  </div>
-  <canvas id="canvas"></canvas>
-
-  <!-- Tag Selector -->
+  <!-- Camera & Controls -->
+  <div id="cameraContainer"><video id="video" autoplay playsinline></video><img id="overlay" alt="Onion skin overlay"/></div>
+  <canvas id="canvas" class="d-none"></canvas>
   <div class="dropdown">
-    <button class="btn dropdown-toggle" type="button" id="tagMenu" data-bs-toggle="dropdown">
-      <i data-lucide="tag"></i> Front
-    </button>
+    <button class="btn dropdown-toggle" type="button" id="tagMenu" data-bs-toggle="dropdown"><i data-lucide="tag"></i> Front</button>
     <ul class="dropdown-menu">
       <li><a class="dropdown-item" href="#" onclick="setTag('Front')">Front</a></li>
       <li><a class="dropdown-item" href="#" onclick="setTag('Back')">Back</a></li>
       <li><a class="dropdown-item" href="#" onclick="setTag('Side')">Side</a></li>
     </ul>
-    <input type="hidden" id="tagSelector" value="Front" />
   </div>
-
-  <!-- Control Bar -->
   <div class="control-bar">
-    <button class="btn btn-light" onclick="toggleCamera()" title="Switch Camera">
-      <i data-lucide="refresh-ccw"></i>
-    </button>
-    <button class="btn btn-danger" onclick="takePhoto()" title="Capture">
-      <i data-lucide="camera"></i>
-    </button>
-    <button class="btn btn-light" id="timerButton" onclick="cycleTimer()" title="Timer">
-      <i data-lucide="clock"></i>
-      <span id="timerLabel">0s</span>
-    </button>
+    <button class="btn btn-light" onclick="toggleCamera()" title="Switch Camera"><i data-lucide="refresh-ccw"></i></button>
+    <button class="btn btn-danger" onclick="takePhoto()" title="Capture"><i data-lucide="camera"></i></button>
+    <button class="btn btn-light" id="timerButton" onclick="cycleTimer()" title="Timer"><i data-lucide="clock"></i><span id="timerLabel">0s</span></button>
   </div>
-
-  <!-- Countdown -->
   <div id="countdown" style="display:none;"></div>
+  
+  <!-- UNIFIED Upload Confirmation Modal -->
+  <div class="modal fade" id="uploadConfirmationModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content glass">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Upload</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <img id="previewImage" src="" alt="Upload preview" class="img-fluid mb-3"/>
+          <div class="mb-3">
+            <label for="photoDate" class="form-label">Date</label>
+            <input type="date" id="photoDate" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label for="photoTag" class="form-label">Tag</label>
+            <select id="photoTag" class="form-select">
+              <option selected disabled>Choose...</option>
+              <option value="Front">Front</option>
+              <option value="Back">Back</option>
+              <option value="Side">Side</option>
+            </select>
+          </div>
+          <div id="uploadProgressContainer" class="progress d-none" style="height: 1.5rem;"><div id="uploadProgressBar" class="progress-bar" style="width:0%">0%</div></div>
+        </div>
+        <div class="modal-footer p-3">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-success" id="confirmUploadButton">Confirm & Upload</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Notification Bar -->
   <div class="notification-bar" id="notificationBar">
@@ -393,24 +165,6 @@
       <div class="notification-list" id="notificationList"></div>
   </div>
 
-  <!-- Preview Modal -->
-  <div class="modal fade" id="previewModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content preview-modal">
-        <div class="modal-body text-center p-4">
-          <img id="previewImage" src="" alt="Captured photo" class="img-fluid"/>
-          <div id="uploadProgressContainer" class="progress d-none mt-3" style="height: 1.5rem;">
-            <div id="uploadProgressBar" class="progress-bar" style="width:0%">0%</div>
-          </div>
-        </div>
-        <div class="modal-footer p-3">
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Retake</button>
-          <button class="btn btn-success" onclick="savePhoto()">Save</button>
-        </div>
-      </div>
-    </div>
-  </div>
- 
   <!-- SCRIPTS -->
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -420,60 +174,171 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
   
   <script>
+    // --- Firebase Configuration ---
     const firebaseConfig = {
-      apiKey: "AIzaSyCpOy4pqmtIsvJMtgoCzbQkLYTwR61cExk",
-      authDomain: "probody-deec4.firebaseapp.com",
-      databaseURL: "https://probody-deec4-default-rtdb.firebaseio.com",
-      projectId: "probody-deec4",
-      storageBucket: "probody-deec4.firebasestorage.app",
-      messagingSenderId: "704731000262",
-      appId: "1:704731000262:web:4b3f4c4b8a0c4e71a8d6c7",
-      measurementId: "G-PNXEC12ZX4"
-    };
-
-    // --- Initialize Firebase ---
+  apiKey: "AIzaSyCpOy4pqmtIsvJMtgoCzbQkLYTwR61cExk",
+  authDomain: "probody-deec4.firebaseapp.com",
+  databaseURL: "https://probody-deec4-default-rtdb.firebaseio.com",
+  projectId: "probody-deec4",
+  storageBucket: "probody-deec4.firebasestorage.app",
+  messagingSenderId: "704731000262",
+  appId: "1:704731000262:web:4b3f4c4b8a0c4e71a8d6c7",
+  measurementId: "G-PNXEC12ZX4"
+};
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
     const storage = firebase.storage();
-
-    // --- Global Variables ---
+    const demoOverlays = {
+        Front: "./front.png",
+        Back: "./back.png",
+        Side: "./1side.png"
+    };
+    // --- Global & State Variables ---
     let currentUser = null;
     let currentStream, currentTrack;
     let useFrontCamera = true;
     let torchEnabled = false;
-    let capturedData, capturedTag;
-    let notificationCount = 0;
-
-    const demoOverlays = {
-        Front: "/front.png",
-        Back: "/back.png",
-        Side: "/1side.png"
-    };
-
+    let capturedBlobSource = null; // Can be a dataURL (from camera) or a File object (from import)
     const timerOptions = [0, 3, 5, 10];
     let timerIndex = 0;
+    let notificationCount = 0;
+    let confirmationModal = null;
 
     // --- Main Initializer ---
     $(document).ready(() => {
         lucide.createIcons();
         startCamera();
-        setTag("Front");
-        loadNotificationsFromJson();
-        loadGlobalCaptureCount();
+        setTag("Front"); // Set initial tag and load onion skin
+        confirmationModal = new bootstrap.Modal($('#uploadConfirmationModal'));
 
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
                 loadInitialOverlays(user.uid);
             } else {
-                addNotification({ title: "Login Required", description: "You must be logged in to use the capture feature. Redirecting..." }, "error");
-                setTimeout(() => { window.location.href = '/login.html'; }, 3000);
+                addNotification({ title: "Login Required", description: "Redirecting..." }, "error");
+                setTimeout(() => { window.location.href = '/login.html'; }, 2000);
             }
         });
+
+        // --- Event Listeners ---
+        $('#photoInput').on('change', handleFileSelect);
+        $('#confirmUploadButton').on('click', handleConfirmUpload);
     });
 
-    // --- Camera & UI Controls ---
+    // --- UNIFIED UPLOAD FLOW ---
+    function handleConfirmUpload() {
+        const date = $('#photoDate').val();
+        const tag = $('#photoTag').val();
+
+        if (!capturedBlobSource || !date || !tag) {
+            return addNotification({ title: "Missing Info", description: "Please ensure a date and tag are selected." }, "error");
+        }
+
+        const blob = (typeof capturedBlobSource === 'string') ? dataURLtoBlob(capturedBlobSource) : capturedBlobSource;
+        
+        const ui = {
+            footer: $("#uploadConfirmationModal .modal-footer"),
+            progressContainer: $("#uploadProgressContainer"),
+            progressBar: $("#uploadProgressBar")
+        };
+
+        ui.footer.find("button").prop("disabled", true);
+        ui.progressBar.removeClass('bg-danger bg-success').css("width", "0%").text("0%");
+        ui.progressContainer.removeClass("d-none");
+        
+        uploadFileToFirebase({
+            blob: blob,
+            tag: tag,
+            dateString: date,
+            onProgress: (progress) => {
+                ui.progressBar.css("width", `${progress}%`).text(`${Math.floor(progress)}%`);
+            },
+            onSuccess: (downloadURL) => {
+                ui.progressBar.addClass('bg-success').text('Success!');
+                setTimeout(() => {
+                    confirmationModal.hide();
+                    ui.footer.find("button").prop("disabled", false);
+                    ui.progressContainer.addClass("d-none");
+                }, 1000);
+
+                // Update onion skin with the new photo
+                localStorage.setItem(`lastPhotoURL_${tag}`, downloadURL);
+                if ($("#tagMenu").text().trim() === tag) {
+                    $("#overlay").attr("src", downloadURL);
+                }
+                addNotification({ title: "Success!", description: `${tag} photo saved.` }, "success");
+            },
+            onError: (error) => {
+                ui.progressBar.addClass('bg-danger').text('Upload Failed');
+                addNotification({ title: "Upload Failed", description: error.message }, "error");
+                 setTimeout(() => {
+                    ui.footer.find("button").prop("disabled", false);
+                    ui.progressContainer.addClass("d-none");
+                }, 2000);
+            }
+        });
+    }
+
+    function uploadFileToFirebase({ blob, tag, dateString, onProgress, onSuccess, onError }) {
+        if (!currentUser) return onError(new Error("User not authenticated."));
+
+        const filename = `${tag.toLowerCase()}-${Date.now()}.png`;
+        const storageRef = storage.ref(`photos/${currentUser.uid}/${dateString}/${filename}`);
+        const uploadTask = storageRef.put(blob);
+
+        uploadTask.on("state_changed",
+            (snapshot) => onProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100),
+            (error) => onError(error),
+            async () => {
+                try {
+                    const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                    const dbRef = db.ref(`users/${currentUser.uid}/gallery/${dateString}`);
+                    await dbRef.update({ [tag.toLowerCase()]: downloadURL });
+                    await db.ref(`users/${currentUser.uid}/uploads`).transaction(c => (c || 0) + 1);
+                    onSuccess(downloadURL);
+                } catch (dbError) {
+                    onError(dbError);
+                }
+            }
+        );
+    }
+
+    // --- Camera & Import Triggers ---
+    function captureNow() {
+        try {
+            const video = $("#video")[0];
+            const canvas = $("#canvas")[0];
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            const ctx = canvas.getContext("2d");
+            if(useFrontCamera) { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            capturedBlobSource = canvas.toDataURL("image/png");
+            
+            $("#previewImage").attr("src", capturedBlobSource);
+            $("#photoDate").val(new Date().toISOString().split('T')[0]);
+            $("#photoTag").val($("#tagMenu").text().trim());
+            confirmationModal.show();
+        } catch (err) {
+            addNotification({ title: "Capture Error", description: `Failed to capture image: ${err.message}` }, "error");
+        }
+    }
+
+    function handleFileSelect(e) {
+        if (!e.target.files[0]) return;
+        capturedBlobSource = e.target.files[0];
+        
+        $("#previewImage").attr("src", URL.createObjectURL(capturedBlobSource));
+        $("#photoDate").val(new Date().toISOString().split('T')[0]);
+        $("#photoTag").val(''); // Reset tag for user selection
+        confirmationModal.show();
+        
+        $('#photoInput').val(''); // Clear input to allow re-selecting the same file
+    }
+
+    // --- UI & Helper Functions ---
     async function startCamera() {
         try {
             if (currentStream) currentStream.getTracks().forEach(t => t.stop());
@@ -486,37 +351,6 @@
         }
     }
 
-    function toggleCamera() {
-        useFrontCamera = !useFrontCamera;
-        startCamera();
-    }
-
-    async function toggleFlash() {
-        if (!currentTrack || !currentTrack.getCapabilities().torch) {
-            return addNotification({ title: "Flash Unavailable", description: "Flash is not available on this camera." }, "error");
-        }
-        try {
-            torchEnabled = !torchEnabled;
-            await currentTrack.applyConstraints({ advanced: [{ torch: torchEnabled }] });
-        } catch (err) {
-            addNotification({ title: "Flash Error", description: `Failed to toggle flash: ${err.message}` }, "error");
-        }
-    }
-
-    function cycleTimer() {
-        timerIndex = (timerIndex + 1) % timerOptions.length;
-        $("#timerLabel").text(`${timerOptions[timerIndex]}s`);
-    }
-
-    function setTag(tag) {
-        $("#tagSelector").val(tag);
-        $("#tagMenu").html(`<i data-lucide="tag"></i> ${tag}`);
-        lucide.createIcons();
-        const lastPhotoURL = localStorage.getItem(`lastPhotoURL_${tag}`);
-        $("#overlay").attr("src", lastPhotoURL || demoOverlays[tag] || "");
-    }
-
-    // --- Capture & Save Logic ---
     function takePhoto() {
         const selectedTimer = timerOptions[timerIndex];
         if (selectedTimer > 0) {
@@ -524,146 +358,33 @@
             $("#countdown").text(remaining).show();
             const timerCountdown = setInterval(() => {
                 remaining--;
-                if (remaining > 0) {
-                    $("#countdown").text(remaining);
-                } else {
-                    clearInterval(timerCountdown);
-                    $("#countdown").hide();
-                    captureNow();
-                }
+                if (remaining > 0) $("#countdown").text(remaining);
+                else { clearInterval(timerCountdown); $("#countdown").hide(); captureNow(); }
             }, 1000);
-        } else {
-            captureNow();
-        }
-    }
-
-    function captureNow() {
-        try {
-            navigator.vibrate?.(100);
-            const video = $("#video")[0];
-            const canvas = $("#canvas")[0];
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext("2d");
-            
-            if(useFrontCamera) {
-                ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1);
-            }
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-            ctx.font = `bold ${Math.floor(canvas.width / 20)}px Inter, sans-serif`;
-            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetX = 2;
-            ctx.shadowOffsetY = 2;
-            ctx.fillText("ProBody", 20, 40);
-            ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
-
-            const d = new Date();
-            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const formattedDate = `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-            ctx.font = `bold ${Math.floor(canvas.width / 25)}px Inter, sans-serif`;
-            const dateWidth = ctx.measureText(formattedDate).width;
-            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-            ctx.beginPath();
-            ctx.roundRect(15, canvas.height - 30, dateWidth + 10, 20, 5);
-            ctx.fill();
-            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-            ctx.fillText(formattedDate, 20, canvas.height - 15);
-
-            capturedData = canvas.toDataURL("image/png");
-            capturedTag = $("#tagSelector").val();
-            $("#previewImage").attr("src", capturedData);
-            new bootstrap.Modal($("#previewModal")).show();
-
-        } catch (err) {
-            addNotification({ title: "Capture Error", description: `Failed to capture image: ${err.message}` }, "error");
-        }
+        } else { captureNow(); }
     }
     
-    // --- FIXED UPLOAD PROGRESS FUNCTION ---
-    async function savePhoto() {
-    if (!capturedData || !currentUser) {
-        return addNotification({ title: "Authentication Error", description: "You must be logged in to save photos." }, "error");
-    }
+function setTag(tag) {
+    $("#tagMenu").html(`<i data-lucide="tag"></i> ${tag}`);
+    lucide.createIcons();
 
-    const modalFooter = $("#previewModal .modal-footer");
-    const progressBarContainer = $("#uploadProgressContainer");
-    const progressBar = $("#uploadProgressBar");
+    const lastPhotoURL = localStorage.getItem(`lastPhotoURL_${tag}`);
+    
+    const overlaySrc = lastPhotoURL || demoOverlays[tag] || "";
 
-    modalFooter.find("button").prop("disabled", true);
-    progressBar.removeClass('bg-danger bg-success').css("width", "0%").text("0%");
-    progressBarContainer.removeClass("d-none");
-
-    const tag = capturedTag.toLowerCase();
-
-    try {
-        // Convert image to blob
-        const blob = dataURLtoBlob(capturedData);
-
-        const date = new Date();
-        const dateString = `${String(date.getDate()).padStart(2,'0')}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getFullYear()).slice(-2)}`; // dddmmyy
-        const filename = `${tag}.jpg`; // Replace previous same-day image
-        const storageRef = storage.ref(`photos/${currentUser.uid}/${dateString}/${filename}`);
-
-        const uploadTask = storageRef.put(blob);
-
-        uploadTask.on("state_changed",
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                progressBar.css("width", `${progress}%`).text(`${Math.floor(progress)}%`);
-            },
-            (error) => {
-                addNotification({ title: "Upload Failed", description: error.message }, "error");
-                progressBar.addClass('bg-danger').text('Upload Failed');
-                setTimeout(() => {
-                    modalFooter.find("button").prop("disabled", false);
-                    progressBarContainer.addClass("d-none");
-                    progressBar.removeClass('bg-danger');
-                }, 2000);
-            },
-            async () => {
-                progressBar.addClass('bg-success').css("width", `100%`).text('Success!');
-                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-
-                const dbUserRef = db.ref(`users/${currentUser.uid}`);
-
-                // Save photo in user's gallery under date & tag
-                await db.ref(`users/${currentUser.uid}/gallery/${dateString}`).update({ [tag]: downloadURL });
-
-                // Increment uploads count atomically
-                await dbUserRef.child('uploads').transaction(current => (current || 0) + 1);
-
-                setTimeout(() => {
-                    const modalInstance = bootstrap.Modal.getInstance($("#previewModal")[0]);
-                    if (modalInstance) modalInstance.hide();
-
-                    modalFooter.find("button").prop("disabled", false);
-                    progressBarContainer.addClass("d-none");
-                    progressBar.removeClass('bg-success');
-                }, 1000);
-
-                // Update UI
-                localStorage.setItem(`lastPhotoURL_${capturedTag}`, downloadURL);
-                $("#overlay").attr("src", downloadURL);
-                addNotification({ title: "Success!", description: `${capturedTag} photo saved.` }, "success");
-
-                // Optional: update uploads circular progress if you have it
-                updateUploadsProgress();
-            }
-        );
-    } catch (error) {
-        addNotification({ title: "Save Error", description: "An unexpected error occurred." }, "error");
-        modalFooter.find("button").prop("disabled", false);
-        progressBarContainer.addClass("d-none");
-    }
+    $("#overlay").attr("src", overlaySrc);
 }
+    
+    function loadInitialOverlays(uid) {
+        const tags = ['Front', 'Back', 'Side'];
+        tags.forEach(tag => {
+            const lastUrl = localStorage.getItem(`lastPhotoURL_${tag}`);
+            if (lastUrl && $("#tagMenu").text().trim() === tag) {
+                 $("#overlay").attr("src", lastUrl);
+            }
+        });
+    }
 
-
-    // --- Utility & Helper Functions ---
     function dataURLtoBlob(dataURL) {
         const parts = dataURL.split(",");
         const mime = parts[0].match(/:(.*?);/)[1];
@@ -674,112 +395,23 @@
         return new Blob([u8arr], { type: mime });
     }
 
-    function loadInitialOverlays(uid) {
-        const tags = ['Front', 'Back', 'Side'];
-        const galleryRef = db.ref(`users/${uid}/gallery`);
-
-        galleryRef.orderByKey().limitToLast(30).once('value', snapshot => {
-            if (!snapshot.exists()) return;
-            const data = snapshot.val();
-            const sortedDates = Object.keys(data).sort().reverse();
-
-            tags.forEach(tag => {
-                let lastUrl = null;
-                const lowerCaseTag = tag.toLowerCase();
-                for (const date of sortedDates) {
-                    if (data[date][lowerCaseTag]) {
-                        lastUrl = data[date][lowerCaseTag];
-                        break;
-                    }
-                }
-                if (lastUrl) {
-                    localStorage.setItem(`lastPhotoURL_${tag}`, lastUrl);
-                    if ($("#tagSelector").val() === tag) {
-                        $("#overlay").attr("src", lastUrl);
-                    }
-                }
-            });
-        });
-    }
-
-    // --- Notifications & Global Count ---
-    function toggleNotificationBar() {
-        $("#notificationBar").toggleClass("active");
-        if (!$("#notificationBar").hasClass("active")) {
-            notificationCount = 0;
-            updateNotificationBadge();
-        }
-    }
-
-    function addNotification({ title, description, image, link }, type = "info") {
-        const notificationId = `notif-${Date.now()}`;
-        const notificationHTML = `
-            <div class="notification ${type}" id="${notificationId}">
-                ${image ? `<img src="${image}" alt="notif-icon" class="notification-image">` : ''}
-                <div class="notification-content">
-                    <strong>${title}</strong>
-                    <p>${description}</p>
-                     ${link ? `<a href="${link}" target="_blank" class="notification-link">Learn More</a>` : ""}
-                </div>
-                <button class="close-btn" onclick="removeNotification('${notificationId}')">&times;</button>
-            </div>`;
-        $("#notificationList").prepend(notificationHTML);
-        if (!$("#notificationBar").hasClass("active")) {
-            notificationCount++;
-            updateNotificationBadge();
-        }
-    }
-
-    function removeNotification(id) {
-        $(`#${id}`).fadeOut(300, function() { $(this).remove(); });
-    }
-
-    function updateNotificationBadge() {
-        const badge = $("#notificationBadge");
-        if (notificationCount > 0) {
-            badge.text(notificationCount).show();
-        } else {
-            badge.hide();
-        }
-    }
-
-    async function loadNotificationsFromJson() {
+    // --- FIXED: Missing Functions ---
+    function toggleCamera() { useFrontCamera = !useFrontCamera; startCamera(); }
+    async function toggleFlash() {
+        if (!currentTrack || !currentTrack.getCapabilities().torch) return addNotification({ title: "Flash Unavailable", description: "Flash is not available." }, "error");
         try {
-            const response = await fetch('/notification.json');
-            if (!response.ok) throw new Error('Network response was not ok');
-            const notifications = await response.json();
-            notifications.forEach(n => addNotification(n, n.type || "info"));
-        } catch (err) {
-            console.error("Failed to load notifications:", err);
-        }
+            torchEnabled = !torchEnabled;
+            await currentTrack.applyConstraints({ advanced: [{ torch: torchEnabled }] });
+        } catch (err) { addNotification({ title: "Flash Error", description: err.message }, "error"); }
     }
-
-    // Reference to global count in Firebase Realtime Database
-const globalCountRef = firebase.database().ref("globalCaptureCount");
-
-// Load global count initially and listen for changes
-function loadGlobalCaptureCount() {
-    globalCountRef.on("value", snapshot => {
-        const count = snapshot.val() || 0;
-        $("#globalCount").text(count);
-    }, err => {
-        console.error("Failed to load global count:", err);
-    });
-}
-
-// Increment global capture count
-function updateGlobalCaptureCount() {
-    globalCountRef.transaction(currentCount => {
-        return (currentCount || 0) + 1; // safely increment
-    }, (err, committed, snapshot) => {
-        if (err) console.error("Failed to update global count:", err);
-        else if (!committed) console.warn("Transaction not committed");
-        else $("#globalCount").text(snapshot.val());
-    });
-}
-
-// Call this once when your app loads
-loadGlobalCaptureCount();
+    function toggleNotificationBar() { $("#notificationBar").toggleClass("active"); }
+    function cycleTimer() { timerIndex = (timerIndex + 1) % timerOptions.length; $("#timerLabel").text(`${timerOptions[timerIndex]}s`); }
+    function addNotification({ title, description, type = "info" }) {
+        const notificationId = `notif-${Date.now()}`;
+        const notificationHTML = `<div class="notification ${type}" id="${notificationId}"><strong>${title}</strong><p>${description}</p></div>`;
+        $("#notificationList").prepend(notificationHTML);
+        setTimeout(() => $(`#${notificationId}`).fadeOut(500, function() { $(this).remove(); }), 5000);
+    }
   </script>
 </body>
 </html>
