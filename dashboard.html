@@ -73,18 +73,13 @@
 <div class="card glass border-0 shadow-sm text-center p-4 mb-4" style="max-width:260px; margin:auto;">
   
   <!-- Circular Progress -->
-  <div class="circular-progress mb-3">
-    <svg viewBox="0 0 100 100">
-      <!-- Track -->
-      <circle class="circle-bg" cx="50" cy="50" r="45" stroke-width="10" fill="none"></circle>
-      <!-- Progress -->
-      <circle id="upl-progress" class="circle" cx="50" cy="50" r="45" stroke="#ff4b2b" stroke-width="10"></circle>
-    </svg>
-    <div class="progress-text">
-      <div id="upl-ratio">0/20</div>
-      <small class="d-block text-muted">Uploads</small>
-    </div>
-  </div>
+  <div class="circular-progress">
+  <svg>
+    <circle class="circle-bg" cx="50%" cy="50%" r="45" fill="none" stroke-width="10"/>
+    <circle id="upl-progress" class="circle" cx="50%" cy="50%" r="45" fill="none" stroke-width="10"/>
+  </svg>
+  <div id="upl-ratio" class="progress-text">0/20</div>
+</div>
 
   <!-- Capture Button -->
   <button class="btn btn-gradient-theme w-100 py-2 shadow-sm" id="captureBtn">
@@ -107,7 +102,6 @@
 
 
 <!-- Premium Party Button -->
-<!-- Trainer Button -->
 <button class="party-btn p-3 mb-4" id="trainerBtn">
   <span class="party-icon">
     <i class="material-icons">fitness_center</i>
@@ -126,6 +120,55 @@
     <p class="subtitle">Enjoy synced music vibes 🎉</p>
   </div>
 </button>
+<!-- START: Reels-Style Video Player (REPLACE your old video component) -->
+<div class="card glass p-3 mb-4">
+  <h6 class="ms-2 mb-3 fw-semibold">Your Progress Reel</h6>
+  
+  <!-- This container controls the size and shape of the player -->
+  <div id="reelsPlayerContainer" class="video-reels-container">
+      
+      <!-- The Video Element -->
+      <video 
+        id="reelsVideo"
+        class="reels-video"
+        src="https://assets.mixkit.co/videos/preview/mixkit-top-aerial-shot-of-seashore-with-rocks-1090-large.mp4" 
+        poster="https://i.imgur.com/sC5n0d1.jpeg"
+        preload="metadata"
+        playsinline
+        loop
+      ></video>
+
+      <!-- Overlay for custom controls -->
+      <div class="controls-overlay">
+          <button class="play-pause-btn">
+              <i class="material-icons play-icon">play_arrow</i>
+              <i class="material-icons pause-icon">pause</i>
+          </button>
+          
+          <div class="bottom-controls">
+              <div class="progress-bar-container">
+                  <div class="progress-bar-fill"></div>
+              </div>
+              <div class="action-buttons">
+                  <button class="mute-btn">
+                      <i class="material-icons volume-on-icon">volume_up</i>
+                      <i class="material-icons volume-off-icon">volume_off</i>
+                  </button>
+              </div>
+          </div>
+
+          <a 
+            id="reelsDownloadBtn"
+            href="https://assets.mixkit.co/videos/preview/mixkit-top-aerial-shot-of-seashore-with-rocks-1090-large.mp4" 
+            download="probody-reel.mp4" 
+            class="btn btn-sm download-button"
+          >
+            <i class="material-icons me-1">download</i>
+          </a>
+      </div>
+  </div>
+</div>
+<!-- END: Reels-Style Video Player -->
 
   </div>
 
@@ -136,10 +179,16 @@
             <i class="material-icons me-2">photo_library</i>
             <span class="text-gradient">Gallery</span>
         </h4>
-        <button id="toggleCompareBtn" class="btn btn-outline-light btn-sm">
-            <i class="material-icons" style="font-size: 1rem; vertical-align: text-bottom;">compare_arrows</i>
-            Compare
-        </button>
+        <div class="btn-group">
+            <button id="generateReelBtn" class="btn btn-gradient-theme btn-sm d-none">
+                <i class="material-icons" style="font-size: 1rem; vertical-align: text-bottom;">movie</i>
+                Generate Reel
+            </button>
+            <button id="toggleCompareBtn" class="btn btn-outline-light btn-sm">
+                <i class="material-icons" style="font-size: 1rem; vertical-align: text-bottom;">compare_arrows</i>
+                Compare
+            </button>
+        </div>
     </div>
 
     <!-- *** NEW: Compare Selection Indicator *** -->
@@ -327,6 +376,69 @@
         </div>
         <div id="sliderBar" class="position-absolute top-0 h-100" 
              style="width:4px; background: #00BFFF; left:50%; transform: translateX(-50%); cursor:ew-resize; z-index: 10;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Find this modal... -->
+<div class="modal fade" id="timelapseProgressModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass">
+      <!-- REPLACE EVERYTHING FROM HERE... -->
+      <div class="modal-body text-center p-4">
+        <h5 class="mb-3">Generating Your Reel</h5>
+        
+        <!-- New Image Preview Area -->
+        <div class="modal-image-preview mb-3">
+          <img id="modalProgressImage" src="" alt="Processing Image">
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress" role="progressbar" style="height: 10px;">
+          <div id="progressBar" class="progress-bar" style="width: 0%; background: var(--btn-bg);"></div>
+        </div>
+        
+        <!-- Dynamic Log Text -->
+        <p id="progressText" class="text-white-50 mt-2 mb-0" style="font-size: 0.9rem;">Initializing...</p>
+      </div>
+      <!-- ...TO HERE -->
+    </div>
+  </div>
+</div>
+
+<!-- ADD THIS ENTIRE MODAL for the Reel Filter -->
+<div class="modal fade" id="reelFilterModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h5 class="modal-title">Customize Your Reel</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="reelFilterForm">
+          <div class="mb-3">
+            <label for="fromDate" class="form-label">From Date</label>
+            <input type="date" class="form-control" id="fromDate">
+          </div>
+          <div class="mb-3">
+            <label for="toDate" class="form-label">To Date</label>
+            <input type="date" class="form-control" id="toDate">
+          </div>
+          <div class="mb-3">
+            <label for="tagFilter" class="form-label">Image Tag</label>
+            <select class="form-select" id="tagFilter">
+              <option value="all" selected>All Poses</option>
+              <option value="front">Front Pose</option>
+              <option value="back">Back Pose</option>
+              <option value="side">Side Pose</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-gradient-theme" id="confirmGenerateBtn">Generate Video</button>
       </div>
     </div>
   </div>

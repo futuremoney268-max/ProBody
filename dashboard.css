@@ -654,13 +654,11 @@ body {
 }
 
 .circular-progress .circle {
-  stroke-dasharray: 283; /* 2πr (r=45) */
-  stroke-dashoffset: 283;
+  stroke: white;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.6s ease, stroke 0.3s ease;
-  fill: none;
-  stroke: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
-  stroke-width: 10;
+  stroke-dasharray: 0;   /* JS will set */
+  stroke-dashoffset: 0;  /* JS will set */
+  transition: stroke-dashoffset 0.3s linear;
 }
 
 .circular-progress .progress-text {
@@ -925,3 +923,154 @@ body {
   object-fit: cover;
   border-radius: 8px;
 }
+
+/* ADD THESE STYLES TO THE END OF dashboard.css */
+
+/* --- Skeleton Loader for Lazy Loading Images --- */
+.skeleton-loader {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--glass-bg);
+  border-radius: 1rem; /* Matches .image-card radius */
+  padding: 0;
+  overflow: hidden; /* Important for the animation effect */
+  position: relative;
+  -webkit-mask-image: -webkit-radial-gradient(white, black); /* Fixes overflow bug on Safari */
+}
+
+.skeleton-loader::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* The shimmering gradient */
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  /* Animation */
+  animation: shimmer 1.5s infinite linear;
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Maintain aspect ratio similar to the image card */
+.skeleton-loader::after {
+  content: '';
+  display: block;
+  padding-bottom: 100%; /* Creates a square aspect ratio */
+}
+
+/* ADD THIS TO THE END of dashboard.css */
+#generateReelBtn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+/* ADD THIS ENTIRE BLOCK TO THE END of dashboard.css */
+
+/* --- Reels-Style Video Player --- */
+.video-reels-container {
+  position: relative;
+  /* CRITICAL FIX: Constrains the width and centers the player */
+  width: 100%;
+  max-width: 350px; 
+  margin: auto;
+  
+  /* CRITICAL FIX: Forces the container into a 9:16 portrait shape */
+  aspect-ratio: 9 / 16;
+  
+  background-color: #000;
+  border-radius: 1rem;
+  overflow: hidden; /* This is essential to clip the video inside the rounded corners */
+  box-shadow: 0 10px BASH
+  30px rgba(0, 0, 0, 0.5);
+}
+
+.reels-video {
+  width: 100%;
+  height: 100%;
+  
+  /* CRITICAL FIX: Makes the video fill the entire container, cropping the sides.
+     This is the key to making a landscape video fit a portrait frame beautifully. */
+  object-fit: cover; 
+}
+
+/* --- Controls Styling (from previous steps) --- */
+.controls-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 25%);
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.video-reels-container:hover .controls-overlay,
+.video-reels-container.is-active .controls-overlay {
+  opacity: 1;
+}
+.play-pause-btn {
+  background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2); color: #fff;
+  width: 70px; height: 70px; border-radius: 50%;
+  display: flex; justify-content: center; align-items: center;
+  cursor: pointer; transition: transform 0.2s ease; padding: 0;
+}
+.play-pause-btn:hover { transform: scale(1.1); }
+.play-pause-btn .material-icons { font-size: 3rem; color: #fff !important; }
+.video-reels-container.is-playing .play-icon { display: none; }
+.video-reels-container:not(.is-playing) .pause-icon { display: none; }
+.bottom-controls {
+  position: absolute; bottom: 0; left: 0; width: 100%;
+  padding: 0.75rem 1rem; display: flex; align-items: center; gap: 1rem;
+}
+.progress-bar-container {
+  flex-grow: 1; height: 5px; background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 5px; cursor: pointer;
+}
+.progress-bar-fill {
+  height: 100%; width: 0%; background: var(--btn-bg); border-radius: 5px;
+  transition: width 0.1s linear;
+}
+.action-buttons { display: flex; gap: 0.5rem; }
+.mute-btn { background: none; border: none; color: #fff; padding: 0.25rem; cursor: pointer; }
+.mute-btn .material-icons { font-size: 1.5rem; color: #fff !important; }
+.video-reels-container.is-muted .volume-on-icon { display: none; }
+.video-reels-container:not(.is-muted) .volume-off-icon { display: none; }
+.controls-overlay .download-button {
+  position: absolute; top: 1rem; right: 1rem; z-index: 10;
+  background: rgba(0, 0, 0, 0.5);
+  
+  .modal-image-preview {
+  width: 100px;
+  aspect-ratio: 9 / 16; /* Same as the reel for consistency */
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+}
+
+#modalProgressImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Fills the container */
+  display: none; /* Hidden by default, shown by JS */
+}```
