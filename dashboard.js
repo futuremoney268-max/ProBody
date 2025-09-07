@@ -16,6 +16,10 @@ const auth = firebase.auth();
 const db = firebase.database();
 const storage = firebase.storage();
 
+// --- NEW: Image Comparison State ---
+let isCompareModeActive = false;
+let compareSelection = []; // Will store {id, url} of selected images
+
 // DOM Elements
 const loader = document.getElementById("loader");
 const dashboard = document.getElementById("probodyDashboard");
@@ -23,671 +27,459 @@ const progressChartEl = document.getElementById("progressChart");
 
 // Main function that runs when the page is ready
 $(function () {
-  // Show loader immediately while checking auth state
-  loader.classList.remove("d-none"); // Update: Show loader at start
+  loader.classList.remove("d-none");
 
-  // Wait for Firebase to confirm the user's login status
   auth.onAuthStateChanged(user => {
     if (user) {
-      // User is signed in
-      console.log("Auth state changed: User is logged in.", user.uid);
       checkMpinAndLoadData(user.uid);
     } else {
-      // User is not signed in
-      console.log("Auth state changed: User is logged out.");
-      loader.classList.add("d-none"); // Update: Hide loader on redirect
-      window.location.href = "login.html"; // Redirect to login page
+      loader.classList.add("d-none");
+      window.location.href = "login.html";
     }
   });
 
-// Collect MPIN from 4 separate boxes
+  // --- REFACTORED AND NEW EVENT BINDINGS ---
+  initializeEventListeners();
+  initializeNavbarScroll();
+});
+
 function getMpinValue() {
   let mpin = "";
-  document.querySelectorAll(".mpin-box").forEach(input => {
-    mpin += input.value; 
-  });
+  document.querySelectorAll(".mpin-box").forEach(input => { mpin += input.value; });
   return mpin;
 }
 
-// Clear all MPIN boxes
 function clearMpinInputs() {
   document.querySelectorAll(".mpin-box").forEach(input => input.value = "");
-  document.querySelector(".mpin-box").focus(); // focus back on first box
+  document.querySelector(".mpin-box").focus();
 }
 
-// Attach input behavior
-document.querySelectorAll(".mpin-box").forEach((box, idx, arr) => {
-  box.addEventListener("input", e => {
-    if (box.value && idx < arr.length - 1) {
-      arr[idx + 1].focus();
-    }
-    // Auto-submit if all 4 filled
-    if (getMpinValue().length === arr.length) {
-      $("#submitMpinBtn").click();
-    }
-  });
+function checkMpinAndLoadData(uid) {
+  db.ref(`users/${uid}/mpin`).once("value")
+    .then(snapshot => {
+      const mpin = snapshot.val();
+      const mpinModal = new bootstrap.Modal(document.getElementById('mpinModal'), { backdrop: 'static', keyboard: false });
+      $("#mpinModalTitle").text(mpin ? 'Enter Your MPIN' : 'Set Your Security MPIN');
+      mpinModal.show();
+    })
+    .catch(error => {
+      console.error("Firebase Error checking MPIN:", error);
+      alert("Could not verify your security settings.");
+      loader.classList.add("d-none");
+    });
+}
 
-  box.addEventListener("keydown", e => {
-    if (e.key === "Backspace" && !box.value && idx > 0) {
-      arr[idx - 1].focus();
-    }
-  });
-});
-  // Check MPIN and load dashboard data
-  function checkMpinAndLoadData(uid) {
-    const userMpinRef = db.ref(`users/${uid}/mpin`);
+function loadUserData(uid) {
+  const userRef = db.ref(`users/${uid}`);
+  userRef.once("value")
+    .then(snapshot => {
+      loader.classList.add("d-none");
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        updateUI(data);
+        dashboard.style.display = "block";
+        showTab("progressTab");
+        initProgressChart();
+        loadUserImages(uid);
+        initProfileEditor();
+      } else {
+        alert("Could not find your user profile.");
+      }
+    })
+    .catch(error => {
+      console.error("Firebase Read Error:", error);
+      alert("An error occurred while fetching your data.");
+      loader.classList.add("d-none");
+    });
+}
 
-    userMpinRef.once("value")
-      .then(snapshot => {
-        const mpin = snapshot.val();
-        const mpinModal = new bootstrap.Modal(document.getElementById('mpinModal'), {
-          backdrop: 'static', // Prevents closing by clicking outside
-          keyboard: false     // Prevents closing with the escape key
-        });
+function updateUI(data) {
+  const { displayName = "-", weight = "-", height = "-", age = "-", photoURL = "Logo.png", uploads = 0, uploadslimit = 20 } = data;
+  
+  $("#progressUserImg").attr("src", photoURL);
+  $("#progressUserName").text(displayName);
+  $("#progressEmail").text(auth.currentUser.email || "-");
+  $("#progressWeight").text(weight);
+  $("#progressHeight").text(height);
+  $("#progressAge").text(age);
 
-        if (mpin !== null) {
-          $("#mpinModalTitle").text('Enter Your MPIN');
-        } else {
-          $("#mpinModalTitle").text('Set Your Security MPIN');
-        }
-        mpinModal.show(); // Show the modal
-      })
-      .catch(error => {
-        console.error("Firebase Error checking MPIN:", error);
-        alert("Could not verify your security settings. Please try again.");
-        loader.classList.add("d-none"); // Update: Hide loader on error
-      });
+  $("#settingsName").text(displayName);
+  $("#settingsWeight").text(weight ? `${weight} kg` : "-");
+  $("#settingsHeight").text(height ? `${height} cm` : "-");
+  $("#settingsAge").text(age);
+  
+  // Upload progress
+  const progressCircle = document.getElementById("upl-progress");
+  const circumference = 2 * Math.PI * 45;
+  const offset = circumference - (uploads / uploadslimit) * circumference;
+  progressCircle.style.strokeDasharray = `${circumference}`;
+  progressCircle.style.strokeDashoffset = offset;
+  $("#upl-ratio").text(`${uploads}/${uploadslimit}`);
+
+  if (uploads >= uploadslimit) {
+    $("#captureBtn").hide();
+    $("#upgradeBtn").css("display", "inline-flex");
+  } else {
+    $("#captureBtn").css("display", "inline-flex");
+    $("#upgradeBtn").hide();
   }
-// Handle MPIN submission
-$("#submitMpinBtn").click(function () {
+}
+
+function initializeEventListeners() {
+  // MPIN Logic
+  document.querySelectorAll(".mpin-box").forEach((box, idx, arr) => {
+    box.addEventListener("input", () => { if (box.value && idx < arr.length - 1) arr[idx + 1].focus(); });
+    box.addEventListener("keydown", e => { if (e.key === "Backspace" && !box.value && idx > 0) arr[idx - 1].focus(); });
+  });
+
+  $("#submitMpinBtn").on("click", handleMpinSubmit);
+  $("#saveMpinBtn").on("click", handleMpinSave);
+  $("#logoutBtn").on("click", () => auth.signOut());
+  $(".mpin-box").on("input", () => $("#mpinError").addClass("d-none"));
+  
+  // Navigation
+  $('#captureBtn').on('click', () => window.location.href = './capture.html');
+  $('#partyBtn').on('click', () => window.location.href = './assistant/music.html');
+  $('#trainerBtn').on('click', () => window.location.href = './assistant/trainer.html');
+
+  // --- NEW: Compare Mode Toggle ---
+  $("#toggleCompareBtn").on("click", toggleCompareMode);
+  
+  // --- NEW: Compare Slider Interactivity ---
+  initCompareSlider();
+}
+
+function handleMpinSubmit() {
   const inputMpin = getMpinValue();
   const user = auth.currentUser;
-
-  if (!user) {
-    alert("You are not logged in.");
-    loader.classList.add("d-none");
-    return;
-  }
-  if (!/^\d{4,6}$/.test(inputMpin)) {
-    alert("MPIN must be 4-6 digits.");
-    clearMpinInputs();
-    return;
-  }
+  if (!user || !/^\d{4,6}$/.test(inputMpin)) return;
 
   const userMpinRef = db.ref(`users/${user.uid}/mpin`);
   userMpinRef.once("value").then(snapshot => {
     const savedMpin = snapshot.val();
-
-    if (savedMpin !== null) {
+    if (savedMpin) {
       if (inputMpin === savedMpin) {
-        const mpinModal = bootstrap.Modal.getInstance(document.getElementById('mpinModal'));
-        mpinModal.hide();
+        bootstrap.Modal.getInstance(document.getElementById('mpinModal')).hide();
         loadUserData(user.uid);
       } else {
         $("#mpinError").removeClass("d-none");
         clearMpinInputs();
       }
     } else {
-      // Set new MPIN
       userMpinRef.set(inputMpin).then(() => {
-        const mpinModal = bootstrap.Modal.getInstance(document.getElementById('mpinModal'));
-        mpinModal.hide();
+        bootstrap.Modal.getInstance(document.getElementById('mpinModal')).hide();
         loadUserData(user.uid);
-      }).catch(error => {
-        console.error("Firebase Error setting MPIN:", error);
-        alert("Failed to set MPIN. Please try again.");
-        loader.classList.add("d-none");
       });
     }
-  }).catch(error => {
-    console.error("Firebase Error reading MPIN:", error);
-    alert("Failed to verify MPIN. Please try again.");
-    loader.classList.add("d-none");
   });
-});
-
-// Reset error on typing
-$(".mpin-box").on("input", () => $("#mpinError").addClass("d-none"));
-
-  // Update: Handle Change MPIN button
-  $("#saveMpinBtn").click(function () {
-    const newMpin = $("#newMpin").val();
-const confirmMpin = $("#confirmNewMpin").val();
-const user = auth.currentUser;
-
-    if (!user) {
-      alert("You are not logged in.");
-      return;
-    }
-    if (!/^\d{4,6}$/.test(newMpin)) {
-      alert("New MPIN must be 4-6 digits.");
-      return;
-    }
-    if (newMpin !== confirmMpin) {
-      alert("MPINs do not match.");
-      return;
-    }
-
-    const userMpinRef = db.ref(`users/${user.uid}/mpin`);
-    userMpinRef.set(newMpin).then(() => {
-      alert("MPIN updated successfully.");
-      $("#newMpin").val(""); // Clear input
-      $("#confirmNewMpin").val(""); // Clear confirmation
-    }).catch(error => {
-      console.error("Firebase Error updating MPIN:", error);
-      alert("Failed to update MPIN. Please try again.");
-    });
-  });
-
-  $("#mpinInput").on("input", () => $("#mpinError").addClass("d-none"));
-  $("#logoutBtn").click(() => auth.signOut());
-
-  // Main data loading function
-  function loadUserData(uid) {
-    const userRef = db.ref(`users/${uid}`);
-    console.log("Fetching data from path:", userRef.toString());
-
-    userRef.once("value")
-      .then(snapshot => {
-        loader.classList.add("d-none"); // Update: Ensure loader is hidden
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          console.log("Data successfully fetched:", data);
-
-          // Populate Progress Tab
-          $("#progressUserImg").attr("src", data.photoURL || "Logo.png");
-          $("#progressUserName").text(data.displayName || "-");
-          $("#progressEmail").text(auth.currentUser.email || "-");
-          $("#progressWeight").text(data.weight ?? "-");
-          $("#progressHeight").text(data.height ?? "-");
-          $("#progressAge").text(data.age ?? "-");
-
-          // Populate Settings Tab
-          $("#settingsName").text(data.displayName || "-");
-          $("#settingsWeight").text(data.weight ? `${data.weight} kg` : "-");
-          $("#settingsHeight").text(data.height ? `${data.height} cm` : "-");
-          $("#settingsAge").text(data.age ?? "-");
-          // Assuming your Firebase stores 'uploads' and 'uploadLimit'
-const uploads = data.uploads ?? 0;
-const uploadLimit = data.uploadslimit ?? 20;
-
-// Update the text
-$("#upl-ratio").text(`${uploads}/${uploadLimit}`);
-
-// Assuming you have these elements
-const upgradeBtn = document.getElementById("upgradeBtn"); // Your upgrade button
-
-
-// Update the circular progress
-const progressCircle = document.getElementById("upl-progress");
-const circumference = 2 * Math.PI * 45; // 2 * PI * r (r=45)
-const offset = circumference - (uploads / uploadLimit) * circumference;
-progressCircle.style.strokeDasharray = `${circumference}`;
-progressCircle.style.strokeDashoffset = offset;
-
-// Update ratio text
-$("#upl-ratio").text(`${uploads}/${uploadLimit}`);
-
-// --- NEW: Show/hide buttons based on uploads ---
-if (uploads >= uploadLimit) {
-  captureBtn.style.display = "none";   // hide capture
-  upgradeBtn.style.display = "inline-flex"; // show upgrade
-} else {
-  captureBtn.style.display = "inline-flex"; // show capture
-  upgradeBtn.style.display = "none";        // hide upgrade
 }
 
-          // Show the dashboard
-          dashboard.style.display = "block";
+function handleMpinSave() {
+    const newMpin = $("#newMpin").val();
+    const confirmMpin = $("#confirmNewMpin").val();
+    const user = auth.currentUser;
+    if (!user || !/^\d{4,6}$/.test(newMpin) || newMpin !== confirmMpin) {
+        alert("Invalid input. Please ensure MPINs are 4-6 digits and match.");
+        return;
+    }
+    db.ref(`users/${user.uid}/mpin`).set(newMpin).then(() => {
+        alert("MPIN updated successfully.");
+        $("#newMpin, #confirmNewMpin").val("");
+    });
+}
 
-          // Initialize other components
-          showTab("progressTab");
-          initProgressChart();
-          loadUserImages(uid); // Uncomment when implemented
-         // makeProfileEditable();
-         initProfileEditor();
-        } else {
-          console.error("No data found for this user in the database.");
-          alert("Could not find your user profile. Please contact support.");
-        }
-      })
-      .catch(error => {
-        console.error("Firebase Read Error:", error);
-        alert("An error occurred while fetching your data.");
-        loader.classList.add("d-none"); // Update: Hide loader on error
-      });
-  }
-
-  window.showTab = function (tabId) {
-  // Hide all tab content
+window.showTab = function (tabId) {
   $('.tab-content').addClass('d-none');
-  // Show the selected tab content
   $('#' + tabId).removeClass('d-none');
-  // Remove active class from all buttons
   $('.navbar .btn').removeClass('active');
-  // Add active class to the clicked button
   $(`.navbar .btn[onclick="showTab('${tabId}')"]`).addClass('active');
 };
 
-
-let progressChart = null; // keep global reference
-
+let progressChart = null;
 function initProgressChart() {
   if (!progressChartEl) return;
-  const ctx = progressChartEl.getContext("2d");
-
-  const uid = firebase.auth().currentUser?.uid;
+  const uid = auth.currentUser?.uid;
   if (!uid) return;
-
-  const logsRef = firebase.database().ref("users/" + uid + "/progressLogs");
-
-  logsRef.on("value", snapshot => {
+  db.ref(`users/${uid}/progressLogs`).on("value", snapshot => {
     const logs = snapshot.val();
     if (!logs) return;
-
-    // Convert logs into arrays
-    const dates = [];
-    const weights = [];
-
-    Object.keys(logs).sort().forEach(dateKey => {
-      dates.push(dateKey); // YYYY-MM-DD
-      weights.push(parseFloat(logs[dateKey].weight));
-    });
-
-    // Destroy old chart safely
-    if (progressChart instanceof Chart) {
-      progressChart.destroy();
-    }
-
-    // Build chart
-    progressChart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: dates,
-        datasets: [{
-          label: "Weight (kg)",
-          data: weights,
-          borderColor: "#ff4b2b",
-          backgroundColor: "rgba(255, 65, 108, 0.2)",
-          tension: 0.4,
-          fill: true,
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { title: { display: true, text: "Date" } },
-          y: { title: { display: true, text: "Weight (kg)" }, beginAtZero: false }
-        }
-      }
+    const dates = Object.keys(logs).sort();
+    const weights = dates.map(dateKey => parseFloat(logs[dateKey].weight));
+    if (progressChart) progressChart.destroy();
+    progressChart = new Chart(progressChartEl.getContext("2d"), {
+      type: "line", data: { labels: dates, datasets: [{ label: "Weight (kg)", data: weights, borderColor: "#ff4b2b", backgroundColor: "rgba(255, 65, 108, 0.2)", tension: 0.4, fill: true }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { title: { display: true, text: "Date" } }, y: { title: { display: true, text: "Weight (kg)" } } } }
     });
   });
 }
-  
-// === Initial binding ===
+
 function initProfileEditor() {
-  const btnContainer = document.getElementById("editBtnContainer");
-  btnContainer.innerHTML = `
-    <button id="editBtn" class="btn btn-primary btn-sm">
-      <i class="material-icons">edit</i> Edit
-    </button>
-  `;
-  document.getElementById("editBtn").onclick = makeProfileEditable;
+  $("#editBtnContainer").html('<button id="editBtn" class="btn btn-primary btn-sm"><i class="material-icons">edit</i> Edit</button>');
+  $("#editBtn").on("click", makeProfileEditable);
 }
 
 function makeProfileEditable() {
-  const fields = {
-    settingsName: "Name",
-    settingsWeight: "Weight",
-    settingsHeight: "Height",
-    settingsAge: "Age"
+  const original = {
+    name: $("#settingsName").text(),
+    weight: $("#settingsWeight").text(),
+    height: $("#settingsHeight").text(),
+    age: $("#settingsAge").text()
   };
-
-  // Store original values
-  const original = {};
-  Object.keys(fields).forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return; // skip if element not found
-
-    original[id] = el.textContent || "";
-
-    let val = original[id]
-      .replace("kg", "")
-      .replace("cm", "");
-
-    const inputType = id === "settingsName" ? "text" : "number";
-    el.innerHTML = `<input id="edit-${id}" type="${inputType}" class="form-control form-control-sm text-end" value="${val}">`;
+  $("#settingsName").html(`<input id="edit-name" type="text" class="form-control form-control-sm text-end" value="${original.name}">`);
+  $("#settingsWeight").html(`<input id="edit-weight" type="number" class="form-control form-control-sm text-end" value="${parseInt(original.weight) || ''}">`);
+  $("#settingsHeight").html(`<input id="edit-height" type="number" class="form-control form-control-sm text-end" value="${parseInt(original.height) || ''}">`);
+  $("#settingsAge").html(`<input id="edit-age" type="number" class="form-control form-control-sm text-end" value="${parseInt(original.age) || ''}">`);
+  $("#editBtnContainer").html(`
+    <button id="saveBtn" class="btn btn-success btn-sm me-2"><i class="material-icons">check</i> Save</button>
+    <button id="cancelBtn" class="btn btn-secondary btn-sm"><i class="material-icons">close</i> Cancel</button>
+  `);
+  $("#saveBtn").on("click", () => saveProfileChanges());
+  $("#cancelBtn").on("click", () => {
+    $("#settingsName").text(original.name);
+    $("#settingsWeight").text(original.weight);
+    $("#settingsHeight").text(original.height);
+    $("#settingsAge").text(original.age);
+    initProfileEditor();
   });
-
-  const btnContainer = document.getElementById("editBtnContainer");
-  if (!btnContainer) return;
-
-  btnContainer.innerHTML = `
-    <button id="saveBtn" class="btn btn-success btn-sm me-2">
-      <i class="material-icons">check</i> Save
-    </button>
-    <button id="cancelBtn" class="btn btn-secondary btn-sm">
-      <i class="material-icons">close</i> Cancel
-    </button>
-  `;
-
-  // === Save handler ===
-  document.getElementById("saveBtn").onclick = () => {
-    const updates = {
-      displayName: document.getElementById("edit-settingsName").value,
-      weight: parseInt(document.getElementById("edit-settingsWeight").value) || 0,
-      height: parseInt(document.getElementById("edit-settingsHeight").value) || 0,
-      age: parseInt(document.getElementById("edit-settingsAge").value) || 0
-    };
-
-    const uid = firebase.auth().currentUser.uid;
-    const userRef = firebase.database().ref("users/" + uid);
-
-    // Update profile fields
-    userRef.update(updates)
-      .then(() => {
-        // Log weight progress (append)
-        const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-        const logRef = userRef.child("progressLogs").child(today);
-
-        logRef.transaction(current => {
-          return {
-            weight: updates.weight,
-            date: new Date().toISOString()
-          };
-        });
-
-        // Update UI
-        document.getElementById("settingsName").textContent = updates.displayName;
-        document.getElementById("settingsWeight").textContent = updates.weight + " kg";
-        document.getElementById("settingsHeight").textContent = updates.height + " cm";
-        document.getElementById("settingsAge").textContent = updates.age;
-
-        resetEditButtons();
-      })
-      .catch(err => alert("Update failed: " + err.message));
-  };
-
-  // === Cancel handler ===
-  document.getElementById("cancelBtn").onclick = () => {
-    Object.keys(fields).forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = original[id];
-    });
-    resetEditButtons();
-  };
 }
 
-// === Reset buttons back to Edit ===
-function resetEditButtons() {
-  const btnContainer = document.getElementById("editBtnContainer");
-  btnContainer.innerHTML = `
-    <button id="editBtn" class="btn btn-primary btn-sm">
-      <i class="material-icons">edit</i> Edit
-    </button>
-  `;
-  document.getElementById("editBtn").onclick = makeProfileEditable;
+function saveProfileChanges() {
+  const updates = {
+    displayName: $("#edit-name").val(),
+    weight: parseInt($("#edit-weight").val()) || 0,
+    height: parseInt($("#edit-height").val()) || 0,
+    age: parseInt($("#edit-age").val()) || 0
+  };
+  const uid = auth.currentUser.uid;
+  const userRef = db.ref(`users/${uid}`);
+  userRef.update(updates).then(() => {
+    const today = new Date().toISOString().split("T")[0];
+    userRef.child("progressLogs").child(today).set({ weight: updates.weight });
+    updateUI(updates); // Update UI immediately
+    initProfileEditor();
+  });
 }
 
-$('#captureBtn').on('click', function() {
-        console.log('Capture button clicked');
-        // Add your capture logic here
-        window.location.href = './capture.html'; 
-    });
-
-    // Party button click
-    $('#partyBtn').on('click', function() {
-        console.log('Party button clicked');
-        // Add your party logic here
-        window.location.href = './assistant/music.html';
-    });
-    $('#trainerBtn').on('click', function() {
-        console.log('Party button clicked');
-        // Add your party logic here
-        window.location.href = './assistant/trainer.html';
-    });
-
- function loadUserImages(uid) {
+function loadUserImages(uid) {
   const grid = $("#galleryGrid");
   grid.empty();
-
-  db.ref(`users/${uid}/gallery`).once("value")
-    .then(snapshot => {
-      const gallery = snapshot.val();
-
-      if (!gallery) {
-        grid.append(`
-          <div class="col-12 text-center text-muted py-3">
-            No progress images found.
-          </div>
-        `);
-        return;
-      }
-
-      // Sort dates descending
-      const sortedDates = Object.keys(gallery).sort((a, b) => new Date(b) - new Date(a));
-
-      sortedDates.forEach(date => {
-        const tags = gallery[date];
-        const d = new Date(date);
-        const formattedDate = d.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
-
-        // Section header
-        grid.append(`
-          <div class="col-12">
-            <h6 class="fw-bold mt-3 mb-2 text-gradient">${formattedDate}</h6>
-          </div>
-        `);
-
-        // Loop tags (F,B,S)
-        Object.entries(tags).forEach(([tag, url]) => {
-          const badgeMap = { front: "F", back: "B", side: "S" };
-          const badge = badgeMap[tag.toLowerCase()] || tag[0].toUpperCase();
-
-          const card = $(`
-            <div class="col-4 mb-3">
-              <div class="card glass text-center p-0 image-card position-relative" 
-                   data-url="${url}" data-date="${date}" data-tag="${tag}">
-                <img src="${url}" class="img-fluid rounded" alt="${tag}">
-                <span class="badge bg-gradient position-absolute top-0 start-0 m-2">${badge}</span>
-              </div>
+  db.ref(`users/${uid}/gallery`).once("value").then(snapshot => {
+    const gallery = snapshot.val();
+    if (!gallery) {
+      $("#galleryPlaceholder").removeClass("d-none");
+      return;
+    }
+    $("#galleryPlaceholder").addClass("d-none");
+    const sortedDates = Object.keys(gallery).sort((a, b) => new Date(b) - new Date(a));
+    sortedDates.forEach(date => {
+      grid.append(`<div class="col-12"><h6 class="fw-bold mt-3 mb-2 text-gradient">${new Date(date).toLocaleDateString("en-US", { month: "short", day: "2-digit" })}</h6></div>`);
+      Object.entries(gallery[date]).forEach(([tag, url]) => {
+        const imageId = `${date}-${tag}`; // Create a unique ID
+        const badge = { front: "F", back: "B", side: "S" }[tag.toLowerCase()] || tag[0].toUpperCase();
+        const card = $(`
+          <div class="col-4 mb-3">
+            <div class="card glass text-center p-0 image-card position-relative" data-id="${imageId}" data-url="${url}" data-date="${date}" data-tag="${tag}">
+              <img src="${url}" class="img-fluid rounded" alt="${tag}">
+              <span class="badge bg-gradient position-absolute top-0 start-0 m-2">${badge}</span>
+              <div class="check-overlay"><i class="material-icons">check</i></div>
             </div>
-          `);
-          grid.append(card);
-        });
+          </div>
+        `);
+        grid.append(card);
       });
-
-      // === Image click → open gallery viewer ===
-      $(".image-card").on("click", function () {
-        const url = $(this).data("url");
-        const date = $(this).data("date");
-        const tag = $(this).data("tag");
-
-        // collect all images into gallery list
-        galleryImages = $(".image-card").map(function () {
-          return {
-            url: $(this).data("url"),
-            date: $(this).data("date"),
-            tag: $(this).data("tag")
-          };
-        }).get();
-
-        currentIndex = galleryImages.findIndex(img => img.url === url);
-
-        showImageInModal(currentIndex);
-      });
-    })
-    .catch(err => {
-      console.error("Error loading images:", err);
-      grid.append(`
-        <div class="col-12 text-center text-danger py-3">
-          Could not load images. Please try again later.
-        </div>
-      `);
     });
+    // Re-bind click event for newly created cards
+    $(".image-card").on("click", handleImageClick);
+  });
 }
-  
-  let galleryImages = [];
+
+// --- NEW: Universal image click handler ---
+function handleImageClick() {
+    if (isCompareModeActive) {
+        handleCompareSelection(this);
+    } else {
+        openImageViewer(this);
+    }
+}
+
+let galleryImages = [];
 let currentIndex = 0;
-let imageModal; // single modal instance
+let imageModal;
 
-// === Show image in existing modal ===
-function showImageInModal(index) {
-  if (galleryImages.length === 0) return;
-  currentIndex = index; // update tracker
-
-  const img = galleryImages[index];
-  $("#modalImage").attr("src", img.url);
-  $("#deleteImg").data("img", img);
-  $("#compareImg").data("img", img);
-
-  // Open modal only once
-  if (!imageModal) {
-    imageModal = new bootstrap.Modal(document.getElementById("imageModal"));
-  }
-  imageModal.show();
+function openImageViewer(cardElement) {
+    const url = $(cardElement).data("url");
+    galleryImages = $(".image-card").map((_, el) => ({
+      url: $(el).data("url"), date: $(el).data("date"), tag: $(el).data("tag")
+    })).get();
+    currentIndex = galleryImages.findIndex(img => img.url === url);
+    showImageInModal(currentIndex);
 }
 
-// === Navigation ===
-$("#nextImg").on("click", () => {
-  if (galleryImages.length > 0) {
-    currentIndex = (currentIndex + 1) % galleryImages.length;
-    showImageInModal(currentIndex);
-  }
-});
-$("#prevImg").on("click", () => {
-  if (galleryImages.length > 0) {
-    currentIndex = (currentIndex - 1 + galleryImages.length) % galleryImages.length;
-    showImageInModal(currentIndex);
-  }
-});
+function showImageInModal(index) {
+    if (!galleryImages.length) return;
+    currentIndex = index;
+    const img = galleryImages[index];
+    $("#modalImage").attr("src", img.url);
+    $("#deleteImg").data("img", img);
+    if (!imageModal) imageModal = new bootstrap.Modal(document.getElementById("imageModal"));
+    imageModal.show();
+}
 
-// === Delete Action ===
+$("#nextImg").on("click", () => { if (galleryImages.length) showImageInModal((currentIndex + 1) % galleryImages.length); });
+$("#prevImg").on("click", () => { if (galleryImages.length) showImageInModal((currentIndex - 1 + galleryImages.length) % galleryImages.length); });
+
 $("#deleteImg").on("click", function () {
-  const img = $(this).data("img");
-  if (!img) return;
-
-  if (confirm("Delete this image?")) {
-    // 1. Remove from Storage
-    const storageRef = storage.refFromURL(img.url);
-    storageRef.delete()
-      .then(() => {
-        // 2. Remove from DB
-        return db.ref(`users/${auth.currentUser.uid}/gallery/${img.date}/${img.tag}`).remove();
-      })
-      .then(() => {
-        // 3. Reduce uploads counter
-        return db.ref(`users/${auth.currentUser.uid}/uploads`).transaction(n => (n || 0) - 1);
-      })
-      .then(() => {
-        alert("Deleted successfully ✅");
-        loadUserImages(auth.currentUser.uid);
-
-        if (imageModal) imageModal.hide();
-      })
-      .catch(err => alert("Error deleting: " + err.message));
-  }
+    const img = $(this).data("img");
+    if (!img || !confirm("Delete this image?")) return;
+    storage.refFromURL(img.url).delete()
+        .then(() => db.ref(`users/${auth.currentUser.uid}/gallery/${img.date}/${img.tag}`).remove())
+        .then(() => db.ref(`users/${auth.currentUser.uid}/uploads`).transaction(n => (n || 0) - 1))
+        .then(() => {
+            alert("Deleted successfully ✅");
+            loadUserImages(auth.currentUser.uid);
+            if (imageModal) imageModal.hide();
+        });
 });
 
-// === Compare Action ===
-$("#compareImg").on("click", function () {
-  const img = $(this).data("img");
-  if (!img) return;
+// --- NEW: Compare Mode Functions ---
+function toggleCompareMode() {
+    isCompareModeActive = !isCompareModeActive;
+    $("#galleryTab").toggleClass("compare-mode", isCompareModeActive);
+    $("#toggleCompareBtn").toggleClass("active", isCompareModeActive);
+    
+    if (isCompareModeActive) {
+        $("#compareIndicator").removeClass("d-none").addClass("d-flex");
+    } else {
+        $("#compareIndicator").addClass("d-none").removeClass("d-flex");
+        // Reset selection when exiting mode
+        compareSelection = [];
+        $(".image-card.selected").removeClass("selected");
+        updateCompareIndicator();
+    }
+}
 
-  // Retrieve current selection from localStorage
-  let selectedImages = JSON.parse(localStorage.getItem("compareSelection")) || [];
+function handleCompareSelection(cardElement) {
+    const card = $(cardElement);
+    const id = card.data("id");
+    const url = card.data("url");
 
-  // Add or remove this image from selection
-  const imgId = img.id || img.date; // unique identifier
-  if (!selectedImages.includes(imgId)) {
-    if (selectedImages.length >= 2) selectedImages.shift(); // Keep only 2
-    selectedImages.push(imgId);
-  } else {
-    selectedImages = selectedImages.filter(i => i !== imgId); // deselect
-  }
+    const existingIndex = compareSelection.findIndex(item => item.id === id);
 
-  // Save updated selection
-  localStorage.setItem("compareSelection", JSON.stringify(selectedImages));
+    if (existingIndex > -1) {
+        // Deselect
+        compareSelection.splice(existingIndex, 1);
+        card.removeClass("selected");
+    } else {
+        // Select
+        if (compareSelection.length < 2) {
+            compareSelection.push({ id, url });
+            card.addClass("selected");
+        }
+    }
+    
+    updateCompareIndicator();
 
-  // Show modal only if 2 images are selected
-  if (selectedImages.length === 2) {
-    const [img1Id, img2Id] = selectedImages;
+    if (compareSelection.length === 2) {
+        openCompareModal();
+    }
+}
 
-    const img1Src = $(`.selectable-img`).filter(function () {
-      const d = $(this).data("img");
-      return d && (d.id === img1Id || d.date === img1Id);
-    }).attr("src");
+function updateCompareIndicator() {
+    const [slot1, slot2] = [$("#compareSlot1"), $("#compareSlot2")];
+    slot1.html(compareSelection[0] ? `<img src="${compareSelection[0].url}">` : '<small class="text-muted">Select First Image</small>');
+    slot2.html(compareSelection[1] ? `<img src="${compareSelection[1].url}">` : '<small class="text-muted">Select Second Image</small>');
+}
 
-    const img2Src = $(`.selectable-img`).filter(function () {
-      const d = $(this).data("img");
-      return d && (d.id === img2Id || d.date === img2Id);
-    }).attr("src");
+function openCompareModal() {
+    $("#compareImg1").attr("src", compareSelection[0].url);
+    $("#compareImg2").attr("src", compareSelection[1].url);
 
-    if (!img1Src || !img2Src) return;
-
-    // Set images in modal
-    $("#compareImg1").attr("src", img1Src);
-    $("#compareImg2").attr("src", img2Src);
-
-    // Reset slider to middle
-    $(".overlay").css("clip-path", "inset(0 50% 0 0)");
+    // Reset slider position
     $("#sliderBar").css("left", "50%");
+    $(".overlay").css("clip-path", "inset(0 50% 0 0)");
 
-    // Show modal
     const modal = new bootstrap.Modal(document.getElementById("compareModal"));
     modal.show();
-  }
-});
-
-function updateUploadProgress(current, limit) {
-  const circle = document.getElementById("upl-progress");
-  const ratio = document.getElementById("upl-ratio");
-
-  const circumference = 2 * Math.PI * 45; // r=45
-  const percent = Math.min(current / limit, 1);
-  circle.style.strokeDasharray = circumference;
-  circle.style.strokeDashoffset = circumference * (1 - percent);
-
-  ratio.textContent = `${current}/${limit}`;
+    
+    // Exit compare mode after opening modal for a clean state
+    toggleCompareMode();
 }
 
+function initCompareSlider() {
+    const slider = document.getElementById('sliderBar');
+    const container = slider.parentElement;
+    let isDragging = false;
+
+    const startDrag = (e) => { isDragging = true; };
+    const endDrag = () => { isDragging = false; };
+    const onDrag = (e) => {
+        if (!isDragging) return;
+        const rect = container.getBoundingClientRect();
+        let x = (e.clientX || e.touches[0].clientX) - rect.left;
+        x = Math.max(0, Math.min(x, rect.width)); // Clamp within bounds
+        const percent = (x / rect.width) * 100;
+        slider.style.left = `${percent}%`;
+        container.querySelector('.overlay').style.clipPath = `inset(0 ${100 - percent}% 0 0)`;
+    };
+
+    slider.addEventListener('mousedown', startDrag);
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('mousemove', onDrag);
+    slider.addEventListener('touchstart', startDrag);
+    document.addEventListener('touchend', endDrag);
+    document.addEventListener('touchmove', onDrag);
+}
+
+// PWA Installation Logic
 let deferredPrompt;
-
 $(document).ready(function() {
-    const $installCard = $(".premium-card"); // The premium card container
-
-    // Check if app is already installed
-    function isPWAInstalled() {
-        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    }
+    const $installCard = $(".premium-card");
+    const isPWAInstalled = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
     if (!isPWAInstalled()) {
-        $installCard.hide(); // hide initially
-
-        // Listen for beforeinstallprompt
-        window.addEventListener('beforeinstallprompt', function(e) {
+        $installCard.hide();
+        window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            $installCard.fadeIn(400); // show premium card
+            $installCard.fadeIn(400);
         });
-
-        // Install button click
-        $("#pwaInstallBtn").on("click", async function() {
+        $("#pwaInstallBtn").on("click", async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                const choiceResult = await deferredPrompt.userChoice;
-                console.log('User choice:', choiceResult.outcome);
                 deferredPrompt = null;
                 $installCard.fadeOut(300);
             }
         });
-
-        // Dismiss button click
-        $("#pwaDismissBtn").on("click", function() {
-            $installCard.fadeOut(300);
-        });
+        $("#pwaDismissBtn").on("click", () => $installCard.fadeOut(300));
     }
 });
 
-});
+
+// --- 2. ADD this ENTIRE new function at the bottom of the file ---
+function initializeNavbarScroll() {
+  const navbar = document.querySelector('.navbar.fixed-bottom');
+  if (!navbar) return; // Exit if navbar isn't found
+
+  let lastScrollTop = 0;
+  const scrollThreshold = 10; // Don't trigger on minor scrolls
+
+  window.addEventListener('scroll', function() {
+    let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+    // Makes sure the user has scrolled more than the threshold
+    if (Math.abs(scrollTop - lastScrollTop) <= scrollThreshold) {
+      return;
+    }
+
+    if (scrollTop > lastScrollTop && scrollTop > navbar.offsetHeight) {
+      // Scrolling Down: hide the navbar
+      navbar.classList.add('navbar-hidden');
+    } else {
+      // Scrolling Up: show the navbar
+      navbar.classList.remove('navbar-hidden');
+    }
+
+    // Update the last scroll position
+    lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+  }, { passive: true }); // Use a passive listener for better scroll performance
+}
