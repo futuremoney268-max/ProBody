@@ -1,28 +1,32 @@
 const CACHE_NAME = "probody-cache-v1";
 const urlsToCache = [
-  "/",
-  "/index.html",
-  "/login.html",
-  "/trainer.html",
-  "/music.html",
-  "/capture.html",
-  "/style.css",
-  "/script.js",
-  "/Logo.png",
-  "/Tere jaisa.mp3",
-  "/1side.png",
-  "/back.png",
-  "/front.png",
-  "/Screenshot_1.jpg",
-  "/Screenshot_2.jpg",
-  "/Screenshot_3.jpg",
-  "/favicon/favicon-16x16.png",
-  "/favicon/favicon-32x32.png",
-  "/favicon/android-chrome-192x192.png",
-  "/favicon/android-chrome-512x512.png",
-  "/favicon/apple-touch-icon.png",
-  "/favicon/favicon.ico",
-  "/manifest.json"
+  "./",
+  "./index.html",
+  "./login.html",
+  "./trainer.html",
+  "./music.html",
+  "./capture.html",
+  "./style.css",
+  "./script.js",
+  "./Logo.png",
+  "./Tere jaisa.mp3",
+  "./1side.png",
+  "./back.png",
+  "./front.png",
+  "./assistant/music.html",
+  "./assistant/trainer.html"
+  "./assistant/script.js"
+  "./assistant/style.css"
+  "./Screenshot_1.jpg",
+  "./Screenshot_2.jpg",
+  "./Screenshot_3.jpg",
+  "./favicon/favicon-16x16.png",
+  "./favicon/favicon-32x32.png",
+  "./favicon/android-chrome-192x192.png",
+  "./favicon/android-chrome-512x512.png",
+  "./favicon/apple-touch-icon.png",
+  "./favicon/favicon.ico",
+  "./manifest.json"
 ];
 
 // Install event → cache files
