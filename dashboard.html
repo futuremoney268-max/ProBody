@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProBody | Dashboard</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Manifest for PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a1a1a">
+  <link rel="stylesheet" href="/dashboard.css">
+</head>
+<body>
+
+<!-- Loader -->
+<div id="loader" class="d-flex justify-content-center align-items-center vh-100 d-none">
+  <div class="spinner-border text-light" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="probodyDashboard" class="container py-4" style="display:none;">
+
+  <!-- Progress Tab -->
+  <div id="progressTab" class="tab-content">
+    
+    <!-- User Profile Card -->
+    <div class="card glass user-profile-card mb-4">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-5 text-center text-md-start">
+          <img id="progressUserImg" src="Logo.png" class="user-avatar rounded-circle mb-3 mb-md-0">
+          <div>
+            <h5 id="progressUserName" class="text-white fw-bold mb-0">John Doe</h5>
+            <small class="text-white-50" id="progressEmail">john@example.com</small>
+          </div>
+        </div>
+        <div class="col-md-7">
+          <div class="row g-2 text-center">
+            <div class="col-4">
+              <div class="stat-item p-2 rounded">
+                <i class="material-icons text-gradient mb-1">scale</i>
+                <div class="stat-value"><span id="progressWeight">70</span> kg</div>
+                <small class="text-white-50">Weight</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="stat-item p-2 rounded">
+                <i class="material-icons text-gradient mb-1">height</i>
+                <div class="stat-value"><span id="progressHeight">170</span> cm</div>
+                <small class="text-white-50">Height</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="stat-item p-2 rounded">
+                <i class="material-icons text-gradient mb-1">cake</i>
+                <div class="stat-value"><span id="progressAge">30</span></div>
+                <small class="text-white-50">Age</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<!-- Uploads Progress + Capture -->
+<div class="card glass border-0 shadow-sm text-center p-4 mb-4" style="max-width:260px; margin:auto;">
+  
+  <!-- Circular Progress -->
+  <div class="circular-progress mb-3">
+    <svg viewBox="0 0 100 100">
+      <!-- Track -->
+      <circle class="circle-bg" cx="50" cy="50" r="45" stroke-width="10" fill="none"></circle>
+      <!-- Progress -->
+      <circle id="upl-progress" class="circle" cx="50" cy="50" r="45" stroke="#ff4b2b" stroke-width="10"></circle>
+    </svg>
+    <div class="progress-text">
+      <div id="upl-ratio">0/20</div>
+      <small class="d-block text-muted">Uploads</small>
+    </div>
+  </div>
+
+  <!-- Capture Button -->
+  <button class="btn btn-gradient-theme w-100 py-2 shadow-sm" id="captureBtn">
+    <span class="material-icons me-2">add_a_photo</span> Capture Progress
+  </button>
+ <div class="d-flex justify-content-center gap-3 mt-3 d-none" id="upgradeBtn">
+  <!-- Upgrade button -->
+  <button class="btn btn-warning btn-sm upgrade-btn" title="Upgrade for extra images">
+    <span class="material-icons me-1" style="font-size:1rem; vertical-align:middle;">upgrade</span>
+    Upgrade
+  </button>
+</div>
+</div>
+ 
+    <!-- Progress Chart -->
+    <div class="card glass p-3 mb-4">
+      <h6 class="ms-2 mb-3 fw-semibold">Weight Journey</h6>
+      <canvas id="progressChart" style="height:240px;"></canvas>
+    </div>
+
+
+<!-- Premium Party Button -->
+<!-- Trainer Button -->
+<button class="party-btn p-3 mb-4" id="trainerBtn">
+  <span class="party-icon">
+    <i class="material-icons">fitness_center</i>
+  </span>
+  <div class="party-text">
+    <h6 class="title">ProBody Trainer</h6>
+    <p class="subtitle">Personalized guidance for your workouts 💪</p>
+  </div>
+</button>
+<button class="party-btn p-3 mb-4" id="partyBtn">
+  <span class="party-icon">
+    <i class="material-icons">music_note</i>
+  </span>
+  <div class="party-text">
+    <h6 class="title">Party Mode</h6>
+    <p class="subtitle">Enjoy synced music vibes 🎉</p>
+  </div>
+</button>
+
+  </div>
+
+  <!-- Gallery Tab -->
+  <div id="galleryTab" class="tab-content d-none">
+    <h4 class="mb-4 fw-bold"><i class="material-icons me-2">photo_library</i><span class="text-gradient">Gallery</span></h4>
+    <div id="galleryGrid" class="row g-3"></div>
+    <div id="galleryPlaceholder" class="text-center text-white-50 mt-5 d-none">
+      <i class="material-icons fs-1">image_search</i>
+      <p class="mt-2">Your gallery is empty.<br>Start by capturing your progress!</p>
+    </div>
+  </div>
+
+  <!-- Settings Tab -->
+  <div id="settingsTab" class="tab-content d-none">
+    <h4 class="mb-4 fw-bold"><i class="material-icons me-2">settings</i><span class="text-gradient">Settings</span></h4>
+    
+    <div class="premium-card card glass p-3 mb-4">
+      
+<div class="">
+  <i class="material-icons">get_app</i>
+  <h5>Install ProBody App</h5>
+  <p>Get quick access and track your progress directly from your device.</p>
+  <div class="d-flex justify-content-center gap-2">
+    <button id="pwaInstallBtn" class="btn btn-success btn-sm">Install</button>
+    <button id="pwaDismissBtn" class="btn btn-outline-light btn-sm">Dismiss</button>
+  </div>
+</div>
+    </div>
+
+<!-- Profile Info -->
+<div class="card glass p-3 mb-4">
+  <ul class="list-group list-group-flush settings-list">
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span><i class="material-icons me-3">person</i>Name</span>
+      <span id="settingsName">John Doe</span>
+    </li>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span><i class="material-icons me-3">scale</i>Weight</span>
+      <span id="settingsWeight">70 kg</span>
+    </li>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span><i class="material-icons me-3">height</i>Height</span>
+      <span id="settingsHeight">170 cm</span>
+    </li>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span><i class="material-icons me-3">cake</i>Age</span>
+      <span id="settingsAge">30</span>
+    </li>
+  </ul>
+
+  <!-- Edit/Save/Cancel Buttons -->
+  <div id="editBtnContainer" class="mt-3 text-end">
+    <button id="editBtn" class="btn btn-primary btn-sm">
+      <i class="material-icons">edit</i> Edit
+    </button>
+  </div>
+</div>
+    
+    <!-- Change MPIN Section -->
+    <div class="card glass p-4 mb-4">
+      <h6 class="mb-3 fw-semibold">Change MPIN</h6>
+      <input type="password" id="newMpin" class="form-control mb-3" placeholder="Enter new 4-6 digit MPIN" pattern="[0-9]*" minlength="4" maxlength="6" inputmode="numeric">
+      <input type="password" id="confirmNewMpin" class="form-control mb-3" placeholder="Confirm new MPIN" pattern="[0-9]*" minlength="4" maxlength="6" inputmode="numeric">
+      <button class="btn btn-gradient-theme w-100 py-2" id="saveMpinBtn">
+        <i class="material-icons me-2">lock</i> Save MPIN
+      </button>
+    </div>
+
+    <!-- Logout -->
+    <div class="card glass p-2">
+      <button class="btn btn-outline-danger w-100 py-2" id="logoutBtn">
+        <i class="material-icons me-2">logout</i> Logout
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAVIGATION -->
+<nav class="navbar fixed-bottom glass">
+  <div class="container-fluid d-flex justify-content-around">
+    <button class="btn active" onclick="showTab('progressTab')" aria-label="Progress Tab">
+      <i class="material-icons">show_chart</i>
+      <small>Progress</small>
+    </button>
+    <button class="btn" onclick="showTab('galleryTab')" aria-label="Gallery Tab">
+      <i class="material-icons">photo_library</i>
+      <small>Gallery</small>
+    </button>
+    <button class="btn" onclick="showTab('settingsTab')" aria-label="Settings Tab">
+      <i class="material-icons">settings</i>
+      <small>Settings</small>
+    </button>
+  </div>
+</nav>
+
+<!-- MPIN Modal -->
+<div class="modal fade" id="mpinModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass p-4">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title" id="mpinModalTitle">Enter Your MPIN</h5>
+      </div><div class="modal-body text-center">
+  <div class="d-flex justify-content-center gap-2 mb-3" id="mpinInputs">
+    <input type="password" maxlength="1" class="mpin-box" inputmode="numeric">
+    <input type="password" maxlength="1" class="mpin-box" inputmode="numeric">
+    <input type="password" maxlength="1" class="mpin-box" inputmode="numeric">
+    <input type="password" maxlength="1" class="mpin-box" inputmode="numeric">
+  </div>
+
+  <button class="btn btn-gradient-theme w-100 mb-2" id="submitMpinBtn">Submit</button>
+  <button class="btn btn-link text-white-50 w-100 mb-2" id="forgotMpinBtn">Forgot MPIN</button>
+  <small class="text-danger d-none" id="mpinError">Incorrect MPIN</small>
+</div>
+      
+    </div>
+  </div>
+</div>
+<!-- Premium Image Viewer Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content glass border-0 shadow-lg position-relative overflow-hidden">
+
+      <!-- Close -->
+      <button type="button" 
+              class="btn btn-dark btn-sm rounded-circle shadow-sm position-absolute top-0 end-0 m-3 fs-5 z-3" 
+              data-bs-dismiss="modal" aria-label="Close">
+        <span class="material-icons text-white">close</span>
+      </button>
+
+      <!-- Popup Menu -->
+      <div class="dropdown position-absolute top-0 start-0 m-3 z-3">
+        <button class="btn btn-dark btn-sm rounded-circle shadow-sm" type="button" data-bs-toggle="dropdown">
+          <span class="material-icons text-white">more_vert</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-dark shadow-lg">
+          <li>
+            <a class="dropdown-item d-flex align-items-center" href="#" id="deleteImg">
+              <span class="material-icons me-2 text-white">delete</span> Delete
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item d-flex align-items-center" href="#" id="compareImg">
+              <span class="material-icons me-2 text-white">compare</span> Compare
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Navigation Arrows -->
+      <button class="nav-arrow left-arrow" id="prevImg" aria-label="Previous">
+        <span class="material-icons text-white">chevron_left</span>
+      </button>
+      <button class="nav-arrow right-arrow" id="nextImg" aria-label="Next">
+        <span class="material-icons text-white">chevron_right</span>
+      </button>
+
+      <!-- Body -->
+      <div class="modal-body d-flex justify-content-center align-items-center p-0 bg-black">
+        <img src="" id="modalImage" 
+             class="img-fluid pinch-zoom-img rounded shadow-lg" 
+             style="max-height:85vh; object-fit:contain;">
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- Compare Modal -->
+<div class="modal fade" id="compareModal" tabindex="-1" aria-labelledby="compareModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="compareModalLabel">Compare Images</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0 position-relative">
+        <div class="compare-container">
+          <img id="compareImg1" src="" alt="Before" class="compare-img">
+          <img id="compareImg2" src="" alt="After" class="compare-img overlay">
+          <div class="slider-bar" id="sliderBar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JS Libraries -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<!-- Custom JS -->
+<script src="/dashboard.js"></script>
+
+</body>
+</html>
