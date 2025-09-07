@@ -906,7 +906,6 @@ body {
   transform: scale(1);
 }
 
-/* Compare Indicator Slot styling */
 #compareIndicator .slot {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(8px);

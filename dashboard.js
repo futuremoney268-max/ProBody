@@ -479,7 +479,6 @@ function initializeNavbarScroll() {
       navbar.classList.remove('navbar-hidden');
     }
 
-    // Update the last scroll position
     lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
-  }, { passive: true }); // Use a passive listener for better scroll performance
+  }, { passive: true });
 }
