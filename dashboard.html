@@ -12,7 +12,7 @@
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <!-- Manifest for PWA -->
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#1a1a1a">
   <link rel="stylesheet" href="./dashboard.css">
 </head>
@@ -215,13 +215,27 @@
     
     <div class="premium-card card glass p-3 mb-4">
       
-<div class="">
-  <i class="material-icons">get_app</i>
-  <h5>Install ProBody App</h5>
-  <p>Get quick access and track your progress directly from your device.</p>
+<div class="premium-card card glass p-4 text-center mb-4">
+  <i class="material-icons mb-3" style="font-size:3rem; color:#00BFFF;">get_app</i>
+  <h4 class="fw-bold mb-2">Install ProBody App</h4>
+  <p class="text-white-50 mb-3">
+    Add ProBody to your home screen for a faster, ad-free experience 🚀.<br>
+    Track your progress anytime, anywhere — even offline!
+  </p>
+  
+  <ul class="list-unstyled text-white-50 small mb-3">
+    <li><i class="material-icons text-gradient me-1" style="font-size:1rem;">check_circle</i> One-tap access</li>
+    <li><i class="material-icons text-gradient me-1" style="font-size:1rem;">check_circle</i> No browser ads</li>
+    <li><i class="material-icons text-gradient me-1" style="font-size:1rem;">check_circle</i> Works offline</li>
+  </ul>
+
   <div class="d-flex justify-content-center gap-2">
-    <button id="pwaInstallBtn" class="btn btn-success btn-sm">Install</button>
-    <button id="pwaDismissBtn" class="btn btn-outline-light btn-sm">Dismiss</button>
+    <button id="pwaInstallBtn" class="btn btn-gradient-theme btn-sm px-3">
+      <i class="material-icons me-1" style="font-size:1rem;">download</i> Install Now
+    </button>
+    <button id="pwaDismissBtn" class="btn btn-outline-light btn-sm px-3">
+      <i class="material-icons me-1" style="font-size:1rem;">close</i> Maybe Later
+    </button>
   </div>
 </div>
     </div>
@@ -381,64 +395,74 @@
   </div>
 </div>
 
-<!-- Find this modal... -->
-<div class="modal fade" id="timelapseProgressModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+<!-- Editor Filter Modal -->
+<div class="modal fade" id="videoEditorFilterModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content glass">
-      <!-- REPLACE EVERYTHING FROM HERE... -->
-      <div class="modal-body text-center p-4">
-        <h5 class="mb-3">Generating Your Reel</h5>
-        
-        <!-- New Image Preview Area -->
-        <div class="modal-image-preview mb-3">
-          <img id="modalProgressImage" src="" alt="Processing Image">
+    <div class="modal-content glass p-3">
+      <h6 class="fw-semibold mb-3">Select Date & Pose</h6>
+      <form id="videoEditorFilterForm">
+        <div class="mb-3">
+          <label for="fromDate" class="form-label">From</label>
+          <input type="date" id="fromDate" class="form-control">
         </div>
-
-        <!-- Progress Bar -->
-        <div class="progress" role="progressbar" style="height: 10px;">
-          <div id="progressBar" class="progress-bar" style="width: 0%; background: var(--btn-bg);"></div>
+        <div class="mb-3">
+          <label for="toDate" class="form-label">To</label>
+          <input type="date" id="toDate" class="form-control">
         </div>
-        
-        <!-- Dynamic Log Text -->
-        <p id="progressText" class="text-white-50 mt-2 mb-0" style="font-size: 0.9rem;">Initializing...</p>
-      </div>
-      <!-- ...TO HERE -->
+        <div class="mb-3">
+          <label for="poseFilter" class="form-label">Pose</label>
+          <select id="poseFilter" class="form-select">
+            <option value="all">All</option>
+            <option value="front">Front</option>
+            <option value="back">Back</option>
+            <option value="side">Side</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Continue</button>
+      </form>
     </div>
   </div>
 </div>
 
-<!-- ADD THIS ENTIRE MODAL for the Reel Filter -->
-<div class="modal fade" id="reelFilterModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content glass">
-      <div class="modal-header">
-        <h5 class="modal-title">Customize Your Reel</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<!-- Video Editor Modal -->
+<div class="modal fade" id="videoEditorModal" tabindex="-1" aria-labelledby="videoEditorModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content glass p-3">
+      <div class="modal-header border-0">
+        <h6 class="fw-semibold mb-0">Video Editor</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+      
       <div class="modal-body">
-        <form id="reelFilterForm">
-          <div class="mb-3">
-            <label for="fromDate" class="form-label">From Date</label>
-            <input type="date" class="form-control" id="fromDate">
+        <!-- Toolbar -->
+
+        <!-- Preview -->
+        <div class="editor-timeline mb-3">
+          <div id="editorPreview" class="preview-box">
+            <img id="editorPreviewImg" src="https://via.placeholder.com/1280x720" alt="Preview">
+            <div class="preview-controls">
+              <span class="material-icons" id="playPauseBtn">play_arrow</span>
+              <span class="time-indicator">00:00 / 00:00</span>
+            </div>
           </div>
-          <div class="mb-3">
-            <label for="toDate" class="form-label">To Date</label>
-            <input type="date" class="form-control" id="toDate">
+
+          <!-- Scenes Strip -->
+          <div class="timeline-scenes" id="timelineScenes">
+            <div class="scene"><img src="https://via.placeholder.com/100x60?text=Scene+1" alt="Scene 1"></div>
+            <div class="scene"><img src="https://via.placeholder.com/100x60?text=Scene+2" alt="Scene 2"></div>
+            <div class="scene"><img src="https://via.placeholder.com/100x60?text=Scene+3" alt="Scene 3"></div>
+            <div class="scene"><img src="https://via.placeholder.com/100x60?text=Scene+4" alt="Scene 4"></div>
           </div>
-          <div class="mb-3">
-            <label for="tagFilter" class="form-label">Image Tag</label>
-            <select class="form-select" id="tagFilter">
-              <option value="all" selected>All Poses</option>
-              <option value="front">Front Pose</option>
-              <option value="back">Back Pose</option>
-              <option value="side">Side Pose</option>
-            </select>
-          </div>
-        </form>
+
+          <!-- Slider -->
+          <input type="range" id="timelineSlider" min="0" max="100" value="0" />
+        </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-gradient-theme" id="confirmGenerateBtn">Generate Video</button>
+
+      <div class="modal-footer border-0">
+        <button id="exportVideoBtn" class="btn btn-success w-100">
+          <i class="material-icons" style="font-size:1rem;vertical-align:text-bottom;">download</i> Export Video
+        </button>
       </div>
     </div>
   </div>

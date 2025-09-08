@@ -46,47 +46,56 @@ $(function () {
 
   initializeEventListeners();
   initializeNavbarScroll();
-  initializeVideoPlayer();
+  
 
-// In your main $(function() { ... }) block
-$(document).on('click', '#generateReelBtn', () => {
-      openReelFilterModal();
+// --- PWA Installation + Service Worker ---
+let deferredPrompt;
+const $installCard = $(".premium-card");
+const $installBtn = $("#pwaInstallBtn");
+const $dismissBtn = $("#pwaDismissBtn");
+
+const isPWAInstalled = () =>
+  window.matchMedia("(display-mode: standalone)").matches ||
+  window.navigator.standalone;
+
+// Register Service Worker
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register("./service-worker.js")
+    .then(() => console.log("✅ Service Worker registered"))
+    .catch(err => console.warn("❌ Service Worker failed:", err));
+}
+
+if (isPWAInstalled()) {
+  // Already installed → hide card
+  $installCard.hide();
+} else {
+  // Hide card until prompt is ready
+  $installCard.hide();
+
+  // Show card when install prompt is available
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    $installCard.fadeIn(400);
   });
-$('#confirmGenerateBtn').on('click', () => {
-    const fromDate = $('#fromDate').val();
-    const toDate = $('#toDate').val();
-    const tag = $('#tagFilter').val();
 
-    const filteredImages = galleryImageData.filter(image => {
-      const isDateInRange = image.date >= fromDate && image.date <= toDate;
-      const isTagMatch = (tag === 'all') || (image.tag === tag);
-      return isDateInRange && isTagMatch;
-    });
-
-    if (filteredImages.length < 2) {
-      alert("Fewer than two images match your filter criteria. Please select a wider range.");
-      return;
-    }
-
-    // --- CHANGE: Pass the entire array of filtered image objects, not just the URLs ---
-    const userName = $("#progressUserName").text() || 'My';
-
-    bootstrap.Modal.getInstance(document.getElementById('reelFilterModal')).hide();
-    
-    // Call the generator with the full data
-    generateReelWithCanvas(filteredImages, userName);
+  // Install button
+  $installBtn.on("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log("PWA install outcome:", outcome);
+    deferredPrompt = null;
+    $installCard.fadeOut(300);
   });
-  // --- PWA Installation Logic ---
-  const $installCard = $(".premium-card");
-  const isPWAInstalled = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  if (!isPWAInstalled()) {
-      $installCard.hide();
-      window.addEventListener('beforeinstallprompt', (e) => {
-          e.preventDefault();
-          deferredPrompt = e;
-          $installCard.fadeIn(400);
-      });
-  }
+
+  // Dismiss button
+  $dismissBtn.on("click", () => {
+    $installCard.fadeOut(300);
+  });
+}
+
 });
 
 // --- Authentication & Security ---
@@ -220,14 +229,6 @@ function initializeEventListeners() {
         });
   });
   
-  $("#pwaInstallBtn").on("click", async () => {
-      if (deferredPrompt) {
-          deferredPrompt.prompt();
-          deferredPrompt = null;
-          $(".premium-card").fadeOut(300);
-      }
-  });
-  $("#pwaDismissBtn").on("click", () => $(".premium-card").fadeOut(300));
 }
 
 // --- Profile & Settings ---
@@ -515,292 +516,266 @@ function initializeNavbarScroll() {
   }, { passive: true });
 }
 
-// --- Helper: render segment with real time ---
-function renderSegment(durationSec, onFrame) {
-    return new Promise(resolve => {
-        const start = performance.now();
-        function step(now) {
-            const elapsed = (now - start) / 1000;
-            const progress = Math.min(1, elapsed / Math.max(0.0001, durationSec));
-            try { onFrame(progress); } catch (e) { console.error(e); }
-            if (progress < 1) requestAnimationFrame(step);
-            else resolve();
-        }
-        requestAnimationFrame(step);
-    });
+// When user clicks Generate button → open filter modal
+$("#generateReelBtn").on("click", function () {
+  // Check if galleryImageData exists and has images
+  if (!galleryImageData || !Array.isArray(galleryImageData) || galleryImageData.length === 0) {
+    alert("No images in your gallery. Please add images to create a reel.");
+    return;
+  }
+
+  // Prefill date filters
+  const dates = galleryImageData.map(img => img.date).filter(date => date);
+  if (dates.length === 0) {
+    alert("No valid dates found in gallery images.");
+    return;
+  }
+  const minDate = dates.reduce((a, b) => (a < b ? a : b));
+  const maxDate = dates.reduce((a, b) => (a > b ? a : b));
+  $("#fromDate").val(minDate);
+  $("#toDate").val(maxDate);
+  $("#poseFilter").val("all");
+
+  // Show filter modal
+  $("#videoEditorFilterModal").modal("show");
+});
+
+// After filter submission → gather images → open editor modal
+$("#videoEditorFilterForm").on("submit", function (e) {
+  e.preventDefault();
+  $("#videoEditorFilterModal").modal("hide");
+
+  const from = $("#fromDate").val();
+  const to = $("#toDate").val();
+  const pose = $("#poseFilter").val();
+
+  // Validate date inputs
+  if (from && to && new Date(from) > new Date(to)) {
+    alert("The 'From' date cannot be later than the 'To' date.");
+    return;
+  }
+
+  // Filter images
+  const selectedImages = galleryImageData.filter(img => {
+    return (!from || img.date >= from) &&
+           (!to || img.date <= to) &&
+           (pose === "all" || img.tag === pose);
+  });
+
+  if (selectedImages.length === 0) {
+    alert("No images match the selected filters. Please adjust your criteria.");
+    return;
+  }
+
+  // Open video editor modal
+  const videoModal = new bootstrap.Modal(document.getElementById("videoEditorModal"));
+  videoModal.show();
+
+  // Build scenes strip with thumbnails
+  const sceneStrip = $(".timeline-scenes").empty();
+  selectedImages.forEach((img, i) => {
+    const thumb = $("<img>")
+      .attr("src", img.url)
+      .attr("alt", `Scene ${i + 1}`)
+      .css({ "object-fit": "cover", width: "100%", height: "100%" });
+
+    $("<div>")
+      .addClass("scene")
+      .attr("data-index", i)
+      .append(thumb)
+      .append(`<div class="scene-label">Scene ${i + 1}</div>`)
+      .appendTo(sceneStrip);
+  });
+
+  // Load first preview
+  $("#editorPreviewImg").attr("src", selectedImages[0].url);
+  $(".timeline-scenes .scene").removeClass("active").first().addClass("active");
+
+  // Update time indicator
+  updateTimeIndicator(0, selectedImages.length);
+
+  // Slider → update preview + highlight (debounced for performance)
+  let sliderTimeout;
+  $("#timelineSlider").off("input").on("input", function () {
+    clearTimeout(sliderTimeout);
+    sliderTimeout = setTimeout(() => {
+      const idx = Math.floor((this.value / 100) * (selectedImages.length - 1));
+      $("#editorPreviewImg").attr("src", selectedImages[idx].url);
+      $(".timeline-scenes .scene").removeClass("active").eq(idx).addClass("active");
+      updateTimeIndicator(idx, selectedImages.length);
+    }, 50); // Debounce to reduce DOM thrashing
+  });
+
+  // Scene click → update preview + slider
+  $(".timeline-scenes .scene").off("click").on("click", function () {
+    const idx = $(this).data("index");
+    $("#editorPreviewImg").attr("src", selectedImages[idx].url);
+    $("#timelineSlider").val((idx / (selectedImages.length - 1)) * 100);
+    $(".timeline-scenes .scene").removeClass("active");
+    $(this).addClass("active");
+    updateTimeIndicator(idx, selectedImages.length);
+  });
+
+  // Update time indicator based on current scene
+  function updateTimeIndicator(index, totalScenes) {
+    const durationPerScene = 1; // 1 second per scene (matches 1 fps export)
+    const currentTime = index * durationPerScene;
+    const totalTime = (totalScenes - 1) * durationPerScene;
+    const formatTime = (seconds) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    };
+    $(".time-indicator").text(`${formatTime(currentTime)} / ${formatTime(totalTime)}`);
+  }
+
+
+
+function convertImageToBase64(url, callback) {
+  const img = new Image();
+  img.crossOrigin = 'Anonymous'; // Attempt to handle CORS
+  img.src = url;
+
+  img.onload = () => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Failed to get canvas context');
+      }
+
+      ctx.drawImage(img, 0, 0);
+      const base64String = canvas.toDataURL('image/png');
+      callback(null, base64String);
+    } catch (error) {
+      callback(error, null);
+    }
+  };
+
+  img.onerror = () => {
+    callback(new Error('Failed to load image'), null);
+  };
 }
-function initializeVideoPlayer() {
-    const container = document.getElementById('reelsPlayerContainer');
-    const video = document.getElementById('reelsVideo');
-    
-    if (!container || !video) return; // Guard clause is still important
+const imageUrl = 'https://firebasestorage.googleapis.com/v0/b/probody-deec4.firebasestorage.app/o/photos%2FJtqgbNeM0OT3brgTeGgJgSfkaBb2%2F2025-09-07%2Ffront-1757288416513.png?alt=media&token=190910b7-13a4-4488-9aa6-f21c92444821';
 
-    const playButton = container.querySelector('.play-pause-btn');
-    
-    // Logic for playing the video
-    const togglePlay = () => video.paused ? video.play() : video.pause();
-    video.addEventListener('play', () => container.classList.add('is-playing'));
-    video.addEventListener('pause', () => container.classList.remove('is-playing'));
-    playButton.addEventListener('click', togglePlay);
-    video.addEventListener('click', togglePlay);
-}
-async function generateReelWithCanvas(imagesData, userName) {
-    const generateBtn = $('#generateReelBtn');
-    const progressModal = new bootstrap.Modal(document.getElementById('timelapseProgressModal'));
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    const modalProgressImage = document.getElementById('modalProgressImage');
 
-    generateBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...');
-    progressBar.style.width = '0%';
-    progressText.textContent = 'Initializing video generator...';
-    modalProgressImage.style.display = 'none';
-    progressModal.show();
+async function exportReel(selectedImages, fps = 1) {
+  if (!window.MediaRecorder) {
+    alert("Your browser does not support video recording. Please use a modern browser like Chrome or Firefox.");
+    return;
+  }
 
-    const WIDTH = 1080, HEIGHT = 1920;
-    const DURATION_PER_IMAGE = 2;
-    const TRANSITION_DURATION = 0.5;
-    const FPS = 30;
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  const width = 720, height = 480;
+  canvas.width = width;
+  canvas.height = height;
 
-    const canvas = document.createElement('canvas');
-    canvas.width = WIDTH;
-    canvas.height = HEIGHT;
-    const ctx = canvas.getContext('2d');
-    const stream = canvas.captureStream(FPS);
-    const audioTrack = await createAudioTrack(imagesData.length * DURATION_PER_IMAGE);
-    if(audioTrack) stream.addTrack(audioTrack);
-    
-    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9,opus' });
-    const chunks = [];
+  // Create MediaRecorder from canvas stream
+  const stream = canvas.captureStream(fps);
+  const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+  const chunks = [];
 
-    recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.ondataavailable = e => {
+    if (e.data.size > 0) chunks.push(e.data);
+  };
+
+  return new Promise((resolve, reject) => {
     recorder.onstop = () => {
-        const videoBlob = new Blob(chunks, { type: 'video/webm' });
-        const videoUrl = URL.createObjectURL(videoBlob);
-        
-        const videoElement = document.getElementById('reelsVideo');
-        const downloadButton = document.getElementById('reelsDownloadBtn');
-        videoElement.src = videoUrl;
-        videoElement.poster = '';
-        downloadButton.href = videoUrl;
-        downloadButton.download = `ProBody-Reel-${new Date().toISOString().split('T')[0]}.webm`;
-        
-        progressModal.hide();
-        generateBtn.prop('disabled', false).html('<i class="material-icons" style="font-size: 1rem; vertical-align: text-bottom;">movie</i> Generate Reel');
-        videoElement.scrollIntoView({ behavior: 'smooth' });
+      const blob = new Blob(chunks, { type: "video/webm" });
+      const url = URL.createObjectURL(blob);
+
+      // Download automatically
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `reel-${new Date().toISOString().slice(0, 10)}.webm`;
+      a.click();
+      URL.revokeObjectURL(url); // Clean up
+
+      resolve(blob);
+    };
+
+    recorder.onerror = () => {
+      reject(new Error("MediaRecorder encountered an error"));
     };
 
     recorder.start();
-    
-    // --- CHANGE: Pre-load images from the new data structure ---
-    const loadedImages = await Promise.all(imagesData.map(data => loadImage(data.url).catch(() => null)));
-    
-    // Main Rendering Loop
-    for (let i = -1; i < imagesData.length; i++) {
-        const currentImage = i >= 0 ? loadedImages[i] : null;
-        // --- CHANGE: Get the date string for the current image ---
-        const currentDate = i >= 0 ? imagesData[i].date : null; 
-        const nextImage = i >= 0 && (i + 1) < loadedImages.length ? loadedImages[i + 1] : null;
 
-        if (i >= 0 && !currentImage) continue; // Skip failed images
+    // Draw frames sequentially using image URLs directly
+    let idx = 0;
+    const img = new Image();
+    img.crossOrigin = 'Anonymous'; // Handle CORS
 
-        const totalFramesInSegment = DURATION_PER_IMAGE * FPS;
-        for (let frame = 0; frame < totalFramesInSegment; frame++) {
-            const progressInSegment = frame / totalFramesInSegment;
-            const overallProgress = (i + 1 + progressInSegment) / (imagesData.length + 1);
-            progressBar.style.width = `${overallProgress * 100}%`;
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, WIDTH, HEIGHT);
-            
-            if (i === -1) {
-                progressText.textContent = 'Creating Title Card...';
-                modalProgressImage.style.display = 'none';
-                drawTitleCard(ctx, userName, progressInSegment);
-            } else {
-                progressText.textContent = `Rendering image ${i + 1} of ${imagesData.length}...`;
-                modalProgressImage.src = imagesData[i].url;
-                modalProgressImage.style.display = 'block';
-
-                const scale = 1 + progressInSegment * 0.1;
-                drawKenBurns(ctx, currentImage, scale, 0, 0);
-
-                // --- NEW: Draw the date overlay on top of the image ---
-                drawDateOverlay(ctx, currentDate);
-
-                if (nextImage && progressInSegment > (1 - TRANSITION_DURATION / DURATION_PER_IMAGE)) {
-                    const transitionProgress = (progressInSegment - (1 - TRANSITION_DURATION / DURATION_PER_IMAGE)) / (TRANSITION_DURATION / DURATION_PER_IMAGE);
-                    ctx.globalAlpha = transitionProgress;
-                    drawKenBurns(ctx, nextImage, 1, 0, 0);
-                    // Also draw the next date during the transition for a smoother effect
-                    drawDateOverlay(ctx, imagesData[i + 1].date);
-                    ctx.globalAlpha = 1;
-                }
-            }
-            await new Promise(resolve => requestAnimationFrame(resolve));
-        }
-    }
-    
-    progressText.textContent = 'Finalizing video...';
-    setTimeout(() => {
+    function drawNext() {
+      if (idx >= selectedImages.length) {
         recorder.stop();
-    }, 500);
-}
-
-/**
- * NEW HELPER FUNCTION
- * Draws a formatted date overlay onto the canvas for the timelapse effect.
- */
-function drawDateOverlay(ctx, dateString) {
-    if (!dateString) return;
-
-    // Format the date string (e.g., "YYYY-MM-DD") into a more readable format
-    // Adding UTC timezone prevents off-by-one day errors across different user timezones
-    const date = new Date(dateString);
-    const formattedDate = date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        timeZone: 'UTC'
-    });
-
-    const canvas = ctx.canvas;
-    const padding = 30;
-    const fontSize = 48;
-    ctx.font = `bold ${fontSize}px Inter, sans-serif`;
-    
-    const textMetrics = ctx.measureText(formattedDate);
-    const rectHeight = fontSize + padding;
-    const rectWidth = textMetrics.width + padding;
-    
-    // Draw a semi-transparent background bar for readability
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-    ctx.fillRect(padding / 2, canvas.height - rectHeight - (padding / 2), rectWidth, rectHeight);
-    
-    // Draw the white date text on top
-    ctx.fillStyle = 'white';
-    ctx.fillText(formattedDate, padding, canvas.height - padding);
-}
-// --- Title Card ---
-function drawTitleCard(ctx, text, progress) {
-    const W = ctx.canvas.width, H = ctx.canvas.height;
-    const gradient = ctx.createLinearGradient(0, 0, W, H);
-    gradient.addColorStop(0, '#1db954');
-    gradient.addColorStop(1, '#1a1a1a');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, W, H);
-
-    const fadeIn = Math.min(1, progress * 4);
-    const slideUp = (1 - progress) * 50;
-    ctx.save();
-    ctx.globalAlpha = fadeIn;
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-
-    // big title
-    const titleSize = Math.floor(Math.max(24, W * 0.088)); // responsive fallback
-    ctx.font = `bold ${titleSize}px Inter, Arial, sans-serif`;
-    ctx.fillText(`${text}'s`, W / 2, H / 2 - 60 + slideUp);
-
-    // subtitle
-    const subSize = Math.floor(Math.max(16, W * 0.044));
-    ctx.font = `${subSize}px Inter, Arial, sans-serif`;
-    ctx.fillText('Progress Journey', W / 2, H / 2 + 60 + slideUp);
-    ctx.restore();
-}
-
-// --- Ken Burns Effect ---
-function drawKenBurns(ctx, img, scale = 1, panX = 0, panY = 0) {
-    if (!img || !img.width || !img.height) return;
-    const canvas = ctx.canvas;
-    const hRatio = canvas.width / img.width;
-    const vRatio = canvas.height / img.height;
-    const ratio = Math.max(hRatio, vRatio);
-    const sw = img.width * ratio * scale;
-    const sh = img.height * ratio * scale;
-    const x = (canvas.width - sw) / 2 + panX;
-    const y = (canvas.height - sh) / 2 + panY;
-    ctx.drawImage(img, x, y, sw, sh);
-}
-
-// --- Audio: returns { track, stop } or null ---
-async function createAudioTrack(durationSec) {
-    try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return null;
-
-        const ctx = new AudioCtx();
-        const res = await fetch('https://cdn.pixabay.com/download/audio/2022/08/04/audio_2dde64f172.mp3');
-        const arrayBuf = await res.arrayBuffer();
-        const buf = await ctx.decodeAudioData(arrayBuf);
-
-        const src = ctx.createBufferSource();
-        src.buffer = buf;
-        src.loop = true;
-
-        const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        // fade out near the end
-        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + Math.max(0.5, durationSec - 0.5));
-
-        src.connect(gain);
-        const dest = ctx.createMediaStreamDestination();
-        gain.connect(dest);
-
-        src.start();
-
-        // schedule stop after duration + small buffer
-        let stopped = false;
-        const stop = () => {
-            if (stopped) return;
-            stopped = true;
-            try { src.stop(); } catch (e) { /* may already be stopped */ }
-            try { ctx.close(); } catch (e) { /* ignore */ }
-        };
-        // safety: set timeout to stop if generate flow fails to call stop
-        const timeoutId = setTimeout(stop, (durationSec + 5) * 1000);
-        const wrappedStop = () => { clearTimeout(timeoutId); stop(); };
-
-        const track = dest.stream.getAudioTracks()[0];
-        // mark track with stop helper
-        return { track, stop: wrappedStop };
-    } catch (e) {
-        console.warn('createAudioTrack failed', e);
-        return null;
-    }
-}
-/**
- * THIS IS THE MISSING FUNCTION
- * Populates and opens the reel filter modal with default date ranges based on the user's gallery.
- */
-function openReelFilterModal() {
-    // Guard clause: Do nothing if there's no image data to filter.
-    if (galleryImageData.length === 0) {
-        alert("Your gallery is empty. Add some images first!");
         return;
+      }
+
+      img.src = selectedImages[idx].url;
+      img.onload = () => {
+        try {
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, width, height);
+          const aspect = img.width / img.height;
+          const targetAspect = width / height;
+          let drawWidth, drawHeight, offsetX, offsetY;
+          if (aspect > targetAspect) {
+            drawWidth = height * aspect;
+            drawHeight = height;
+            offsetX = (width - drawWidth) / 2;
+            offsetY = 0;
+          } else {
+            drawWidth = width;
+            drawHeight = width / aspect;
+            offsetX = 0;
+            offsetY = (height - drawHeight) / 2;
+          }
+          ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+          idx++;
+          setTimeout(drawNext, 1000 / fps);
+        } catch (error) {
+          console.error(`Failed to draw image at index ${idx}:`, error);
+          idx++;
+          setTimeout(drawNext, 1000 / fps);
+        }
+      };
+
+      img.onerror = () => {
+        console.error(`Failed to load image at index ${idx}: ${selectedImages[idx].url}`);
+        idx++;
+        setTimeout(drawNext, 1000 / fps);
+      };
     }
 
-    // Find the earliest and latest dates from the gallery to set as smart defaults in the form.
-    const dates = galleryImageData.map(img => img.date);
-    const minDate = dates.reduce((a, b) => a < b ? a : b);
-    const maxDate = dates.reduce((a, b) => a > b ? a : b);
-
-    // Populate the form fields with the calculated dates and reset the tag dropdown.
-    $('#fromDate').val(minDate);
-    $('#toDate').val(maxDate);
-    $('#tagFilter').val('all');
-
-    // Use Bootstrap's JavaScript API to create a new modal instance and show it.
-    const modal = new bootstrap.Modal(document.getElementById('reelFilterModal'));
-    modal.show();
+    drawNext();
+  });
 }
-// --- Load Image ---
-function loadImage(url) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.decoding = 'async';
-        img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = (ev) => reject(new Error('Failed to load image ' + url));
-        img.src = url;
+
+// [Rest of the code remains unchanged]
+  // Hook export button
+  $("#exportVideoBtn").off("click").on("click", function () {
+    const $btn = $(this);
+    $btn
+      .addClass("loading")
+      .html('<i class="material-icons" style="font-size:1rem;vertical-align:text-bottom;">hourglass_empty</i> Exporting...')
+      .prop("disabled", true);
+
+    exportReel(selectedImages, 1).then(() => {
+      $btn
+        .removeClass("loading")
+        .html('<i class="material-icons" style="font-size:1rem;vertical-align:text-bottom;">download</i> Export Video')
+        .prop("disabled", false);
+    }).catch(err => {
+      console.error("Export failed:", err);
+      alert("Failed to export video. Please try again.");
+      $btn
+        .removeClass("loading")
+        .html('<i class="material-icons" style="font-size:1rem;vertical-align:text-bottom;">download</i> Export Video')
+        .prop("disabled", false);
     });
-}
+  });
+});
