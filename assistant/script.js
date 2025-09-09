@@ -19,10 +19,10 @@ const CATEGORIES = [
     name: 'Back', 
     icon: 'sports_gymnastics', 
     exercises: [
-      { name: 'Lat Pulldown', level: 'Beginner', sets: 4, reps: 12, unit: 'reps', image: 'https://i.imgur.com/3f5v1V3.gif', description: 'Sit at a lat pulldown machine and grab the bar with a wide grip. Pull the bar down to your upper chest.' },
-      { name: 'Pull-Ups', level: 'Intermediate', sets: 4, reps: 8, unit: 'reps', image: 'https://i.imgur.com/Eni15n5.gif', description: 'Hang from a pull-up bar with an overhand grip. Pull your body up until your chin is over the bar.' },
-      { name: 'Bent Over Row', level: 'Intermediate', sets: 3, reps: 10, unit: 'reps', image: 'https://i.imgur.com/tZ3bQyI.gif', description: 'Bend at your hips and knees and grab a barbell with an overhand grip. Pull the bar towards your stomach.' },
-      { name: 'Deadlift', level: 'Pro', sets: 4, reps: 5, unit: 'reps', image: 'https://i.imgur.com/wVb9S3B.gif', description: 'Stand with your mid-foot under a barbell. Lift the bar by straightening your hips and knees until you are standing upright.' }
+      { name: 'Lat Pulldown', level: 'Beginner', sets: 4, reps: 12, unit: 'reps', image: 'https://www.inspireusafoundation.org/file/2022/08/wide-grip-lat-pulldown.gif', description: 'Sit at a lat pulldown machine and grab the bar with a wide grip. Pull the bar down to your upper chest.' },
+      { name: 'Pull-Ups', level: 'Intermediate', sets: 4, reps: 8, unit: 'reps', image: 'https://hips.hearstapps.com/hmg-prod/images/pull-up-647dd51506791.gif?resize=980:*', description: 'Hang from a pull-up bar with an overhand grip. Pull your body up until your chin is over the bar.' },
+      { name: 'Bent Over Row', level: 'Intermediate', sets: 3, reps: 10, unit: 'reps', image: 'https://cdn.shopify.com/s/files/1/0449/8453/3153/files/Bent_Over_Row.gif?v=1689836376', description: 'Bend at your hips and knees and grab a barbell with an overhand grip. Pull the bar towards your stomach.' },
+      { name: 'Deadlift', level: 'Pro', sets: 4, reps: 5, unit: 'reps', image: 'https://www.kettlebellkings.com/cdn/shop/articles/barbell-deadlift-movement_1200x1200_crop_center.gif?v=1692228918', description: 'Stand with your mid-foot under a barbell. Lift the bar by straightening your hips and knees until you are standing upright.' }
     ]
   },
   // 3. TRICEPS
@@ -42,9 +42,10 @@ const CATEGORIES = [
     name: 'Biceps',
     icon: 'sports_martial_arts',
     exercises: [
-        { name: 'Bicep Curls', level: 'Beginner', sets: 3, reps: 12, unit: 'reps', image: 'https://i.imgur.com/7g1bQ3c.gif', description: 'Stand holding dumbbells with an underhand grip. Curl the weights up towards your shoulders, squeezing your biceps.' },
-        { name: 'Hammer Curls', level: 'Intermediate', sets: 4, reps: 12, unit: 'reps', image: 'https://i.imgur.com/0v8fLhE.gif', description: 'Stand holding dumbbells with palms facing each other. Curl the weights up towards your shoulders.' },
-        { name: 'Chin-Ups', level: 'Pro', sets: 4, reps: 8, unit: 'reps', image: 'https://i.imgur.com/b2b1S5g.gif', description: 'Hang from a pull-up bar with an underhand grip. Pull your body up until your chin is over the bar.' }
+        { name: 'Bicep Curls', level: 'Beginner', sets: 3, reps: 12, unit: 'reps', image: 'https://hips.hearstapps.com/hmg-prod/images/workouts/2016/03/dumbbellcurl-1457043876.gif', description: 'Stand holding dumbbells with an underhand grip. Curl the weights up towards your shoulders, squeezing your biceps.' },
+        { name: 'EZ Bar Curls', level: 'Beginner', sets: 3, reps: 12, unit: 'reps', image: 'https://burnfit.io/wp-content/uploads/2023/11/EZB_CURL.gif', description: 'Stand holding dumbbells with an underhand grip. Curl the weights up towards your shoulders, squeezing your biceps.' },
+        { name: 'Hammer Curls', level: 'Intermediate', sets: 4, reps: 12, unit: 'reps', image: 'https://burnfit.io/wp-content/uploads/2023/11/DB_HAM_CURL.gif', description: 'Stand holding dumbbells with palms facing each other. Curl the weights up towards your shoulders.' },
+        { name: 'Preacher Curl', level: 'Pro', sets: 3, reps: 15, unit: 'reps', image: 'https://www.inspireusafoundation.org/file/2022/03/ez-bar-preacher-curl.gif', description: 'Hang from a pull-up bar with an underhand grip. Pull your body up until your chin is over the bar.' }
     ]
   },
   // 5. LEGS
