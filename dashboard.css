@@ -634,12 +634,14 @@ body {
    ========================= */
 .circular-progress {
   position: relative;
-  width: 140px;
-  height: 140px;
+  width: 160px;
+  height: 160px;
   display: flex;
   justify-content: center;
   align-items: center;
   margin: 2rem auto;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.08), transparent 70%);
+  border-radius: 50%;
 }
 
 .circular-progress svg {
@@ -649,18 +651,20 @@ body {
 }
 
 .circular-progress .circle-bg {
-  stroke: rgba(255, 255, 255, 0.15);
+  stroke: rgba(255, 255, 255, 0.1);
   stroke-width: 10;
 }
 
 .circular-progress .circle {
-  stroke: white;
+  stroke: url(#progressGradient); /* gradient stroke */
   stroke-linecap: round;
-  stroke-dasharray: 0;   /* JS will set */
-  stroke-dashoffset: 0;  /* JS will set */
-  transition: stroke-dashoffset 0.3s linear;
+  stroke-dasharray: 283; /* full circumference (2πr, r=45) */
+  stroke-dashoffset: 283;
+  transition: stroke-dashoffset 1s ease; /* smooth animation */
+  filter: drop-shadow(0 0 6px rgba(0, 255, 204, 0.5));
 }
 
+/* Text inside circle */
 .circular-progress .progress-text {
   position: absolute;
   text-align: center;
@@ -669,47 +673,62 @@ body {
 }
 
 .circular-progress .progress-text #upl-ratio {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   margin-bottom: 2px;
   display: block;
+  background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .circular-progress .progress-text small {
   font-size: 0.85rem;
-  color: var(--text-muted);
+  color: white;
 }
 
 /* =========================
-   CAPTURE BUTTON
+   CAPTURE BUTTON (Premium)
    ========================= */
 #captureBtn {
-  background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
   border: none;
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 1rem;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
   padding: 1rem 2rem;
   font-size: 1rem;
   cursor: pointer;
   width: 100%;
-  max-width: 200px;
+  max-width: 220px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4),
+              0 0 12px rgba(29, 185, 84, 0.6); /* green glow */
+  transition: all 0.3s ease;
 }
 
 #captureBtn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 22px var(--highlight-color);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6),
+              0 0 20px rgba(29, 185, 84, 0.8);
 }
 
 #captureBtn:active {
-  transform: translateY(0);
-  box-shadow: 0 3px 12px var(--highlight-color);
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5),
+              0 0 10px rgba(29, 185, 84, 0.7);
 }
 
 #captureBtn i {
-  vertical-align: middle;
-  font-size: 1.3rem;
-  margin-right: 0.5rem;
+  font-size: 1.4rem;
+}
+
+/* Optional gradient stroke for progress */
+.circular-progress svg defs {
+  position: absolute;
 }
 
 /* General Responsive Improvements */
@@ -979,222 +998,109 @@ body {
     font-size: 0.8rem;
 }
 
-/* Glassmorphism Styling */
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 15px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-/* Modal Styling */
-.modal-xl {
-  max-width: 90vw;
-}
-
-.modal-content {
-  padding: 1.5rem;
-  border: none;
-}
-
-.modal-header {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.modal-header h6 {
+/* --- Video Editor Modal --- */
+#videoEditorModal .modal-content {
+  background-color: #121212; /* Dark modal background */
   color: #fff;
-  font-weight: 700;
-  letter-spacing: 0.5px;
 }
 
-.btn-close-white {
-  filter: invert(1);
-}
-
-/* Preview Area */
-.preview-box {
+/* Preview Section */
+#videoEditorModal .bg-black {
+  background-color: #000 !important;
   position: relative;
-  width: 100%;
-  aspect-ratio: 16/9;
-  background: #1a1a1a;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 1rem;
 }
 
-#editorPreviewImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+#videoEditorModal #editorPreviewImg {
+  max-height: 60vh;
+  object-fit: contain;
 }
 
-.preview-controls {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* Overlay Controls */
+#videoEditorModal .time-indicator {
+  font-size: 0.85rem;
   color: #fff;
 }
 
-.preview-controls .material-icons {
+#videoEditorModal #playPauseBtn {
   cursor: pointer;
+  color: #00BFFF; /* Blue accent */
   font-size: 1.5rem;
-  transition: transform 0.2s;
 }
 
-.preview-controls .material-icons:hover {
-  transform: scale(1.2);
-}
-
-.time-indicator {
-  font-size: 0.9rem;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 2px 8px;
-  border-radius: 5px;
-}
-
-/* Timeline */
-.editor-timeline {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 10px;
-  padding: 1rem;
-}
-
-.timeline-scenes {
-  display: flex;
-  overflow-x: auto;
-  gap: 5px;
-  padding: 10px 0;
-  scrollbar-width: thin;
-  scrollbar-color: #6200ea transparent;
-}
-
-.timeline-scenes::-webkit-scrollbar {
-  height: 8px;
-}
-
-.timeline-scenes::-webkit-scrollbar-thumb {
-  background: #6200ea;
-  border-radius: 10px;
-}
-
-.scene {
-  width: 100px;
-  height: 60px;
-  background: #333;
-  border-radius: 5px;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  position: relative;
-}
-
-.scene img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 5px;
-}
-
-.scene:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-}
-
-.scene.active {
-  border: 2px solid #6200ea;
+/* Timeline Section */
+#videoEditorModal .bg-secondary {
+  background-color: #1e1e1e !important; /* Dark gray background */
+  padding: 0.75rem 1rem;
+  border-top: 1px solid rgba(255,255,255,0.1);
 }
 
 /* Slider */
-#timelineSlider {
+#videoEditorModal #timelineSlider {
+  accent-color: #00BFFF; /* Blue slider handle */
+}
+
+/* Scenes Strip */
+#videoEditorModal #timelineScenes {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+/* Scene Thumbnail */
+#videoEditorModal .scene {
+  flex: 0 0 auto;
+  width: 100px;
+  height: 60px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+#videoEditorModal .scene img {
   width: 100%;
-  height: 8px;
-  -webkit-appearance: none;
-  background: linear-gradient(to right, #6200ea 0%, #6200ea var(--value), #ccc var(--value), #ccc 100%);
-  border-radius: 5px;
-  outline: none;
-  cursor: pointer;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-#timelineSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  background: #6200ea;
-  border-radius: 50%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
+/* Hover & Active Scene */
+#videoEditorModal .scene:hover {
+  transform: scale(1.05);
+  border-color: #00BFFF;
 }
 
-/* Toolbar */
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 1rem;
+#videoEditorModal .scene.active {
+  border-color: #00BFFF;
+  box-shadow: 0 0 10px #00BFFF;
 }
 
-.tool-btn {
-  background: linear-gradient(45deg, #6200ea, #8b00ff);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  transition: transform 0.2s, box-shadow 0.2s;
+/* Scrollbar for scenes strip */
+#videoEditorModal #timelineScenes::-webkit-scrollbar {
+  height: 6px;
 }
 
-.tool-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+#videoEditorModal #timelineScenes::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+#videoEditorModal #timelineScenes::-webkit-scrollbar-thumb {
+  background-color: #00BFFF;
+  border-radius: 3px;
 }
 
 /* Export Button */
-#exportVideoBtn {
-  background: linear-gradient(45deg, #00c853, #00e676);
+#videoEditorModal #exportVideoBtn {
+  background-color: #00BFFF;
   border: none;
-  border-radius: 8px;
-  padding: 10px;
+  color: #fff;
   font-weight: 600;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-#exportVideoBtn:hover {
+#videoEditorModal #exportVideoBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-}
-
-/* Animations */
-@keyframes slideIn {
-  from { transform: translateY(50px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.modal.fade .modal-dialog {
-  animation: slideIn 0.3s ease-out;
-}
-
-/* Scene Label */
-.scene-label {
-  position: absolute;
-  bottom: 2px;
-  left: 2px;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  font-size: 0.7rem;
-  padding: 2px 4px;
-  border-radius: 3px;
-}
-
-/* Export Button Loading State */
-#exportVideoBtn.loading {
-  background: linear-gradient(45deg, #666, #999);
-  pointer-events: none;
-  opacity: 0.7;
+  box-shadow: 0 6px 12px rgba(0,191,255,0.5);
 }

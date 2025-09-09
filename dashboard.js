@@ -37,7 +37,7 @@ $(function () {
 
   auth.onAuthStateChanged(user => {
     if (user) {
-      checkMpinAndLoadData(user.uid);
+      loadUserData(user.uid);
     } else {
       loader.classList.add("d-none");
       window.location.href = "login.html";
@@ -97,16 +97,31 @@ if (isPWAInstalled()) {
 }
 
 });
+  let mpinsubmit = false; // global flag
 
 // --- Authentication & Security ---
 function checkMpinAndLoadData(uid) {
-  db.ref(`users/${uid}/mpin`).once("value")
-    .then(snapshot => {
-      const mpin = snapshot.val();
-      const mpinModal = new bootstrap.Modal(document.getElementById('mpinModal'), { backdrop: 'static', keyboard: false });
-      $("#mpinModalTitle").text(mpin ? 'Enter Your MPIN' : 'Set Your Security MPIN');
-      mpinModal.show();
-    });
+  if (mpinsubmit) {
+    // Already checked → just load data
+    loadUserImages(uid);
+  } else {
+    db.ref(`users/${uid}/mpin`).once("value")
+      .then(snapshot => {
+        const mpin = snapshot.val();
+        const mpinModal = new bootstrap.Modal(
+          document.getElementById("mpinModal"),
+          { backdrop: "static", keyboard: false }
+        );
+
+        $("#mpinModalTitle").text(
+          mpin ? "Enter Your MPIN" : "Set Your Security MPIN"
+        );
+        mpinModal.show();
+
+        // ✅ mark as done so it won’t trigger again this session
+        mpinsubmit = true;
+      });
+  }
 }
 
 function handleMpinSubmit() {
@@ -120,15 +135,20 @@ function handleMpinSubmit() {
     if (savedMpin) {
       if (inputMpin === savedMpin) {
         bootstrap.Modal.getInstance(document.getElementById('mpinModal')).hide();
-        loadUserData(user.uid);
+        loadUserImages(user.uid);
+        clearMpinInputs();
+        mpinsubmit = true;
       } else {
         $("#mpinError").removeClass("d-none");
         clearMpinInputs();
+        mpinsubmit = false;
       }
     } else {
       userMpinRef.set(inputMpin).then(() => {
         bootstrap.Modal.getInstance(document.getElementById('mpinModal')).hide();
-        loadUserData(user.uid);
+        loadUserImages(user.uid);
+        clearMpinInputs();
+        mpinsubmit = true;
       });
     }
   });
@@ -157,7 +177,7 @@ function loadUserData(uid) {
         dashboard.style.display = "block";
         showTab("progressTab");
         initProgressChart();
-        loadUserImages(uid);
+        //loadUserImages(uid);
         initProfileEditor();
       } else {
         alert("Could not find your user profile.");
@@ -210,6 +230,31 @@ function initializeEventListeners() {
   $('#captureBtn').on('click', () => window.location.href = './capture.html');
   $('#partyBtn').on('click', () => window.location.href = './assistant/music.html');
   $('#trainerBtn').on('click', () => window.location.href = './assistant/trainer.html');
+  $('#shareBtn').on('click', async () => {
+  const siteLink = "https://your-site-link.com"; // 🔗 replace with your site URL
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'ProBody',
+        text: 'Track your fitness journey with me on ProBody 💪',
+        url: siteLink
+      });
+    } catch (err) {
+      console.warn("Share canceled:", err);
+    }
+  } else {
+    // Fallback for devices without native share
+    navigator.clipboard.writeText(siteLink)
+      .then(() => alert("Link copied to clipboard ✅"))
+      .catch(() => alert("Could not copy link"));
+  }
+});
+  $('#communityBtn').on('click', () => {
+  // Replace with your community link (e.g., WhatsApp group, Discord, Telegram, Forum, etc.)
+  const communityLink = "https://whatsapp.com/channel/0029VbBQ8DtLtOjInQGEu80j";
+  window.open(communityLink, "_blank");
+});
 
   $("#toggleCompareBtn").on("click", toggleCompareMode);
   initCompareSlider();
@@ -217,17 +262,35 @@ function initializeEventListeners() {
   $("#nextImg").on("click", () => { if (galleryImages.length) showImageInModal((currentIndex + 1) % galleryImages.length); });
   $("#prevImg").on("click", () => { if (galleryImages.length) showImageInModal((currentIndex - 1 + galleryImages.length) % galleryImages.length); });
   $("#deleteImg").on("click", function () {
-    const img = $(this).data("img");
-    if (!img || !confirm("Delete this image?")) return;
-    storage.refFromURL(img.url).delete()
-        .then(() => db.ref(`users/${auth.currentUser.uid}/gallery/${img.date}/${img.tag}`).remove())
-        .then(() => db.ref(`users/${auth.currentUser.uid}/uploads`).transaction(n => (n || 0) - 1))
-        .then(() => {
-            alert("Deleted successfully ✅");
-            loadUserImages(auth.currentUser.uid);
-            if (imageModal) imageModal.hide();
-        });
-  });
+  const img = $(this).data("img");
+  if (!img) return;
+
+  if (!confirm("Are you sure you want to delete this image?")) return;
+
+  const uid = auth.currentUser.uid;
+  const storageRef = storage.refFromURL(img.url);
+  const dbRef = db.ref(`users/${uid}/gallery/${img.date}/${img.tag}`);
+
+  // 1. Delete from Firebase Storage
+  storageRef.delete()
+    .then(() => {
+      // 2. Delete entry from Realtime Database
+      return dbRef.remove();
+    })
+    .then(() => {
+      // 3. Decrease uploads count
+      return db.ref(`users/${uid}/uploads`).transaction(n => (n || 0) - 1);
+    })
+    .then(() => {
+      alert("Image deleted successfully ✅");
+      loadUserImages(uid);
+      if (imageModal) imageModal.hide();
+    })
+    .catch(err => {
+      console.error("Error deleting image:", err);
+      alert("Failed to delete image ❌. Please try again.");
+    });
+});
   
 }
 
@@ -294,6 +357,59 @@ function saveProfileChanges() {
   });
 }
 
+// Update displayed value when slider changes
+$("#weightInputRange").on("input", function() {
+  $("#weightInputValue").text($(this).val());
+});
+
+// YES button: open weight input modal
+$("#weightYesBtn").on("click", () => {
+  const currentWeight = parseInt($("#progressWeight").text()) || 70;
+  $("#weightInputRange").val(currentWeight);
+  $("#weightInputValue").text(currentWeight);
+  const modal = new bootstrap.Modal(document.getElementById("weightInputModal"));
+  modal.show();
+});
+
+// Save button inside the modal
+$("#saveWeightInputBtn").on("click", () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const selectedWeight = parseInt($("#weightInputRange").val()) || 70;
+  const todayKey = getLocalDateKey(); // YYYY-MM-DD
+  const updates = {};
+  updates[`users/${user.uid}/settings/weightCheckedToday`] = true;
+  updates[`users/${user.uid}/progressLogs/${todayKey}`] = {
+    weight: selectedWeight,
+    updatedAt: Date.now()
+  };
+
+  firebase.database().ref().update(updates)
+    .then(() => {
+      $("#progressWeight").text(selectedWeight); // Update UI
+      const modalInstance = bootstrap.Modal.getInstance(document.getElementById("weightInputModal"));
+      modalInstance.hide();
+    });
+});
+
+// NO button: save current displayed weight without popup
+$("#weightNoBtn").on("click", () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const currentWeight = parseInt($("#progressWeight").text()) || 0;
+  const todayKey = getLocalDateKey(); // YYYY-MM-DD
+
+  db.ref(`users/${user.uid}/progressLogs/${todayKey}`).update({
+    weight: currentWeight,
+    updatedAt: Date.now()
+  }).then(() => {
+    // mark as NOT manually checked
+    db.ref(`users/${user.uid}/settings`).update({ weightCheckedToday: false });
+  });
+});
+
 function handleMpinSave() {
     const newMpin = $("#newMpin").val();
     const confirmMpin = $("#confirmNewMpin").val();
@@ -310,6 +426,7 @@ function handleMpinSave() {
 
 // --- Gallery & Image Logic ---
 function loadUserImages(uid) {
+    
     const grid = $("#galleryGrid");
     const galleryRef = db.ref(`users/${uid}/gallery`);
 
@@ -474,8 +591,13 @@ function initCompareSlider() {
     document.addEventListener('touchmove', onDrag);
 }
 
-// --- General UI & Chart Logic ---
 window.showTab = function (tabId) {
+  // If switching to gallery, check MPIN first
+  if (tabId !== "progressTab" && auth.currentUser) {
+    checkMpinAndLoadData(auth.currentUser.uid);
+  }
+
+  // Normal tab switching
   $('.tab-content').addClass('d-none');
   $('#' + tabId).removeClass('d-none');
   $('.navbar .btn').removeClass('active');
@@ -516,32 +638,98 @@ function initializeNavbarScroll() {
   }, { passive: true });
 }
 
-// When user clicks Generate button → open filter modal
-$("#generateReelBtn").on("click", function () {
-  // Check if galleryImageData exists and has images
-  if (!galleryImageData || !Array.isArray(galleryImageData) || galleryImageData.length === 0) {
-    alert("No images in your gallery. Please add images to create a reel.");
+// ==========================
+// Module-level variables
+// ==========================
+let selectedImages = [];
+let sliderTimeout;
+let playInterval;
+let isPlaying = false;
+
+// Canvas preview
+const canvas = document.getElementById("editorPreviewCanvas");
+const ctx = canvas.getContext("2d");
+const PREVIEW_WIDTH = canvas.width;
+const PREVIEW_HEIGHT = canvas.height;
+
+// ==========================
+// Debug log helper
+// ==========================
+function logEditor(msg) {
+  const log = document.getElementById("editorLog");
+  const time = new Date().toLocaleTimeString();
+  log.innerHTML += `[${time}] ${msg}<br>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+// ==========================
+// Show scene by index
+// ==========================
+function showScene(idx) {
+  if (!selectedImages.length) return;
+  const img = new Image();
+  img.crossOrigin = "Anonymous";
+  img.src = selectedImages[idx].url;
+
+  img.onload = () => {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT);
+
+    const aspect = img.width / img.height;
+    const targetAspect = PREVIEW_WIDTH / PREVIEW_HEIGHT;
+    let drawWidth, drawHeight, offsetX, offsetY;
+
+    if (aspect > targetAspect) {
+      drawWidth = PREVIEW_HEIGHT * aspect;
+      drawHeight = PREVIEW_HEIGHT;
+      offsetX = (PREVIEW_WIDTH - drawWidth) / 2;
+      offsetY = 0;
+    } else {
+      drawWidth = PREVIEW_WIDTH;
+      drawHeight = PREVIEW_WIDTH / aspect;
+      offsetX = 0;
+      offsetY = (PREVIEW_HEIGHT - drawHeight) / 2;
+    }
+
+    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+    $(".timeline-scenes .scene").removeClass("active").eq(idx).addClass("active");
+    updateTimeIndicator(idx, selectedImages.length);
+    logEditor(`Scene ${idx + 1} displayed`);
+  };
+
+  img.onerror = () => logEditor(`Failed to load scene ${idx + 1}`);
+}
+
+// ==========================
+// Update time indicator
+// ==========================
+function updateTimeIndicator(idx, total) {
+  const duration = 1; // seconds per scene
+  const format = (s) => `${Math.floor(s/60).toString().padStart(2,"0")}:${(s%60).toString().padStart(2,"0")}`;
+  $(".time-indicator").text(`${format(idx*duration)} / ${format(total*duration)}`);
+}
+
+// ==========================
+// Generate reel modal
+// ==========================
+$("#generateReelBtn").on("click", () => {
+  if (!galleryImageData || !galleryImageData.length) {
+    alert("No images in your gallery.");
     return;
   }
 
-  // Prefill date filters
-  const dates = galleryImageData.map(img => img.date).filter(date => date);
-  if (dates.length === 0) {
-    alert("No valid dates found in gallery images.");
-    return;
-  }
-  const minDate = dates.reduce((a, b) => (a < b ? a : b));
-  const maxDate = dates.reduce((a, b) => (a > b ? a : b));
-  $("#fromDate").val(minDate);
-  $("#toDate").val(maxDate);
+  const dates = galleryImageData.map(img => img.date).filter(Boolean);
+  $("#fromDate").val(Math.min(...dates));
+  $("#toDate").val(Math.max(...dates));
   $("#poseFilter").val("all");
 
-  // Show filter modal
   $("#videoEditorFilterModal").modal("show");
 });
 
-// After filter submission → gather images → open editor modal
-$("#videoEditorFilterForm").on("submit", function (e) {
+// ==========================
+// Filter form submission
+// ==========================
+$("#videoEditorFilterForm").on("submit", function(e) {
   e.preventDefault();
   $("#videoEditorFilterModal").modal("hide");
 
@@ -549,233 +737,195 @@ $("#videoEditorFilterForm").on("submit", function (e) {
   const to = $("#toDate").val();
   const pose = $("#poseFilter").val();
 
-  // Validate date inputs
-  if (from && to && new Date(from) > new Date(to)) {
-    alert("The 'From' date cannot be later than the 'To' date.");
+  selectedImages = galleryImageData.filter(img =>
+    (!from || img.date >= from) &&
+    (!to || img.date <= to) &&
+    (pose === "all" || img.tag === pose)
+  );
+
+  if (!selectedImages.length) {
+    alert("No images match the selected filters.");
     return;
   }
 
-  // Filter images
-  const selectedImages = galleryImageData.filter(img => {
-    return (!from || img.date >= from) &&
-           (!to || img.date <= to) &&
-           (pose === "all" || img.tag === pose);
+  // Show modal
+  new bootstrap.Modal(document.getElementById("videoEditorModal")).show();
+
+  buildTimeline(selectedImages);
+  showScene(0);
+  initSlider();
+  initPlayPause();
+  initExport();
+});
+
+// ==========================
+// Build timeline strip
+// ==========================
+function buildTimeline(images) {
+  const strip = $(".timeline-scenes").empty();
+  images.forEach((img, i) => {
+    const thumb = $("<img>").attr({ src: img.url, alt: `Scene ${i+1}` })
+                            .css({ objectFit:"cover", width:"100%", height:"100%" });
+    $("<div>").addClass("scene").attr("data-index", i).append(thumb).appendTo(strip);
   });
 
-  if (selectedImages.length === 0) {
-    alert("No images match the selected filters. Please adjust your criteria.");
-    return;
-  }
-
-  // Open video editor modal
-  const videoModal = new bootstrap.Modal(document.getElementById("videoEditorModal"));
-  videoModal.show();
-
-  // Build scenes strip with thumbnails
-  const sceneStrip = $(".timeline-scenes").empty();
-  selectedImages.forEach((img, i) => {
-    const thumb = $("<img>")
-      .attr("src", img.url)
-      .attr("alt", `Scene ${i + 1}`)
-      .css({ "object-fit": "cover", width: "100%", height: "100%" });
-
-    $("<div>")
-      .addClass("scene")
-      .attr("data-index", i)
-      .append(thumb)
-      .append(`<div class="scene-label">Scene ${i + 1}</div>`)
-      .appendTo(sceneStrip);
+  $(".timeline-scenes .scene").off("click").on("click", function() {
+    const idx = $(this).data("index");
+    showScene(idx);
+    $("#timelineSlider").val((idx / (selectedImages.length - 1)) * 100);
   });
+}
 
-  // Load first preview
-  $("#editorPreviewImg").attr("src", selectedImages[0].url);
-  $(".timeline-scenes .scene").removeClass("active").first().addClass("active");
-
-  // Update time indicator
-  updateTimeIndicator(0, selectedImages.length);
-
-  // Slider → update preview + highlight (debounced for performance)
-  let sliderTimeout;
-  $("#timelineSlider").off("input").on("input", function () {
+// ==========================
+// Initialize slider
+// ==========================
+function initSlider() {
+  $("#timelineSlider").off("input").on("input", function() {
+    if (selectedImages.length <= 1) return;
     clearTimeout(sliderTimeout);
     sliderTimeout = setTimeout(() => {
       const idx = Math.floor((this.value / 100) * (selectedImages.length - 1));
-      $("#editorPreviewImg").attr("src", selectedImages[idx].url);
-      $(".timeline-scenes .scene").removeClass("active").eq(idx).addClass("active");
-      updateTimeIndicator(idx, selectedImages.length);
-    }, 50); // Debounce to reduce DOM thrashing
+      showScene(idx);
+    }, 50);
   });
-
-  // Scene click → update preview + slider
-  $(".timeline-scenes .scene").off("click").on("click", function () {
-    const idx = $(this).data("index");
-    $("#editorPreviewImg").attr("src", selectedImages[idx].url);
-    $("#timelineSlider").val((idx / (selectedImages.length - 1)) * 100);
-    $(".timeline-scenes .scene").removeClass("active");
-    $(this).addClass("active");
-    updateTimeIndicator(idx, selectedImages.length);
-  });
-
-  // Update time indicator based on current scene
-  function updateTimeIndicator(index, totalScenes) {
-    const durationPerScene = 1; // 1 second per scene (matches 1 fps export)
-    const currentTime = index * durationPerScene;
-    const totalTime = (totalScenes - 1) * durationPerScene;
-    const formatTime = (seconds) => {
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
-      return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    };
-    $(".time-indicator").text(`${formatTime(currentTime)} / ${formatTime(totalTime)}`);
-  }
-
-
-
-function convertImageToBase64(url, callback) {
-  const img = new Image();
-  img.crossOrigin = 'Anonymous'; // Attempt to handle CORS
-  img.src = url;
-
-  img.onload = () => {
-    try {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) {
-        throw new Error('Failed to get canvas context');
-      }
-
-      ctx.drawImage(img, 0, 0);
-      const base64String = canvas.toDataURL('image/png');
-      callback(null, base64String);
-    } catch (error) {
-      callback(error, null);
-    }
-  };
-
-  img.onerror = () => {
-    callback(new Error('Failed to load image'), null);
-  };
 }
-const imageUrl = 'https://firebasestorage.googleapis.com/v0/b/probody-deec4.firebasestorage.app/o/photos%2FJtqgbNeM0OT3brgTeGgJgSfkaBb2%2F2025-09-07%2Ffront-1757288416513.png?alt=media&token=190910b7-13a4-4488-9aa6-f21c92444821';
 
+// ==========================
+// Initialize play/pause
+// ==========================
+function initPlayPause() {
+  $("#playPauseBtn").off("click").on("click", function() {
+    if (!selectedImages.length) return;
 
-async function exportReel(selectedImages, fps = 1) {
+    if (isPlaying) {
+      clearInterval(playInterval);
+      $(this).text("play_arrow");
+      isPlaying = false;
+      logEditor("Playback paused");
+    } else {
+      let idx = $(".timeline-scenes .scene.active").data("index") || 0;
+      $(this).text("pause");
+      isPlaying = true;
+      logEditor("Playback started");
+
+      playInterval = setInterval(() => {
+        showScene(idx);
+        $("#timelineSlider").val((idx / (selectedImages.length - 1)) * 100);
+        idx++;
+        if (idx >= selectedImages.length) {
+          clearInterval(playInterval);
+          $("#playPauseBtn").text("play_arrow");
+          isPlaying = false;
+          logEditor("Playback ended");
+        }
+      }, 1000);
+    }
+  });
+}
+
+// ==========================
+// Initialize export
+// ==========================
+function initExport() {
+  $("#exportVideoBtn").off("click").on("click", function() {
+    $(this).prop("disabled", true).html('<i class="material-icons me-1">hourglass_empty</i> Exporting...');
+    exportReel(selectedImages, 1, "My Progress", "The End")
+      .then(() => {
+        $(this).prop("disabled", false).html('<i class="material-icons me-1">download</i> Export Video');
+        logEditor("Export completed");
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Export failed!");
+        $(this).prop("disabled", false).html('<i class="material-icons me-1">download</i> Export Video');
+        logEditor("Export failed");
+      });
+  });
+}
+
+// ==========================
+// Export reel function
+// ==========================
+async function exportReel(images, fps = 1, title = "My Progress", ending = "The End") {
   if (!window.MediaRecorder) {
-    alert("Your browser does not support video recording. Please use a modern browser like Chrome or Firefox.");
+    alert("Your browser does not support video recording.");
     return;
   }
 
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+  const exportCanvas = document.createElement("canvas");
+  const exportCtx = exportCanvas.getContext("2d");
   const width = 720, height = 480;
-  canvas.width = width;
-  canvas.height = height;
+  exportCanvas.width = width;
+  exportCanvas.height = height;
 
-  // Create MediaRecorder from canvas stream
-  const stream = canvas.captureStream(fps);
+  const stream = exportCanvas.captureStream(fps);
   const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
   const chunks = [];
-
-  recorder.ondataavailable = e => {
-    if (e.data.size > 0) chunks.push(e.data);
-  };
+  recorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
 
   return new Promise((resolve, reject) => {
     recorder.onstop = () => {
       const blob = new Blob(chunks, { type: "video/webm" });
       const url = URL.createObjectURL(blob);
-
-      // Download automatically
       const a = document.createElement("a");
       a.href = url;
-      a.download = `reel-${new Date().toISOString().slice(0, 10)}.webm`;
+      a.download = `reel-${new Date().toISOString().slice(0,10)}.webm`;
       a.click();
-      URL.revokeObjectURL(url); // Clean up
-
+      URL.revokeObjectURL(url);
       resolve(blob);
     };
-
-    recorder.onerror = () => {
-      reject(new Error("MediaRecorder encountered an error"));
-    };
-
+    recorder.onerror = () => reject(new Error("MediaRecorder error"));
     recorder.start();
 
-    // Draw frames sequentially using image URLs directly
-    let idx = 0;
-    const img = new Image();
-    img.crossOrigin = 'Anonymous'; // Handle CORS
+    let idx = -1;
+    function drawTextCard(text) {
+      exportCtx.fillStyle = "#000";
+      exportCtx.fillRect(0,0,width,height);
+      exportCtx.fillStyle = "#fff";
+      exportCtx.font = "bold 40px Inter, sans-serif";
+      exportCtx.textAlign = "center";
+      exportCtx.textBaseline = "middle";
+      exportCtx.fillText(text, width/2, height/2);
+    }
 
-    function drawNext() {
-      if (idx >= selectedImages.length) {
-        recorder.stop();
-        return;
-      }
+    const drawNext = () => {
+      idx++;
+      if(idx===0) { drawTextCard(title); setTimeout(drawNext, 1000); return; }
+      const imgIdx = idx-1;
+      if(imgIdx<images.length){
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.src = images[imgIdx].url;
+        img.onload = () => {
+          exportCtx.fillStyle = "#000";
+          exportCtx.fillRect(0,0,width,height);
 
-      img.src = selectedImages[idx].url;
-      img.onload = () => {
-        try {
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, width, height);
-          const aspect = img.width / img.height;
-          const targetAspect = width / height;
+          const aspect = img.width/img.height;
+          const targetAspect = width/height;
           let drawWidth, drawHeight, offsetX, offsetY;
-          if (aspect > targetAspect) {
-            drawWidth = height * aspect;
+
+          if(aspect>targetAspect){
+            drawWidth = height*aspect;
             drawHeight = height;
-            offsetX = (width - drawWidth) / 2;
+            offsetX = (width-drawWidth)/2;
             offsetY = 0;
           } else {
             drawWidth = width;
-            drawHeight = width / aspect;
+            drawHeight = width/aspect;
             offsetX = 0;
-            offsetY = (height - drawHeight) / 2;
+            offsetY = (height-drawHeight)/2;
           }
-          ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
-          idx++;
-          setTimeout(drawNext, 1000 / fps);
-        } catch (error) {
-          console.error(`Failed to draw image at index ${idx}:`, error);
-          idx++;
-          setTimeout(drawNext, 1000 / fps);
-        }
-      };
 
-      img.onerror = () => {
-        console.error(`Failed to load image at index ${idx}: ${selectedImages[idx].url}`);
-        idx++;
-        setTimeout(drawNext, 1000 / fps);
-      };
-    }
+          exportCtx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+          setTimeout(drawNext, 1000/fps);
+        };
+        img.onerror = () => setTimeout(drawNext, 1000/fps);
+      } else {
+        drawTextCard(ending);
+        setTimeout(()=>recorder.stop(),1000);
+      }
+    };
 
     drawNext();
   });
 }
-
-// [Rest of the code remains unchanged]
-  // Hook export button
-  $("#exportVideoBtn").off("click").on("click", function () {
-    const $btn = $(this);
-    $btn
-      .addClass("loading")
-      .html('<i class="material-icons" style="font-size:1rem;vertical-align:text-bottom;">hourglass_empty</i> Exporting...')
-      .prop("disabled", true);
-
-    exportReel(selectedImages, 1).then(() => {
-      $btn
-        .removeClass("loading")
-        .html('<i class="material-icons" style="font-size:1rem;vertical-align:text-bottom;">download</i> Export Video')
-        .prop("disabled", false);
-    }).catch(err => {
-      console.error("Export failed:", err);
-      alert("Failed to export video. Please try again.");
-      $btn
-        .removeClass("loading")
-        .html('<i class="material-icons" style="font-size:1rem;vertical-align:text-bottom;">download</i> Export Video')
-        .prop("disabled", false);
-    });
-  });
-});

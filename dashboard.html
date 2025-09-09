@@ -70,34 +70,42 @@
     </div>
 
 <!-- Uploads Progress + Capture -->
-<div class="card glass border-0 shadow-sm text-center p-4 mb-4" style="max-width:260px; margin:auto;">
-  
+<div class="card glass premium-progress-card text-center mb-4">
+  <!-- Title -->
+  <h6 class="fw-semibold mb-3 text-gradient">Your Uploads</h6>
+
   <!-- Circular Progress -->
-  <div class="circular-progress">
-  <svg>
-    <circle class="circle-bg" cx="50%" cy="50%" r="45" fill="none" stroke-width="10"/>
-    <circle id="upl-progress" class="circle" cx="50%" cy="50%" r="45" fill="none" stroke-width="10"/>
-  </svg>
-  <div id="upl-ratio" class="progress-text">0/20</div>
-</div>
+  <div class="circular-progress mx-auto">
+    <svg>
+      <circle class="circle-bg" cx="50%" cy="50%" r="45" fill="none" stroke-width="10"/>
+      <circle id="upl-progress" class="circle" cx="50%" cy="50%" r="45" fill="none" stroke-width="10"/>
+    </svg>
+    <div id="upl-ratio" class="progress-text">0/20</div>
+  </div>
 
   <!-- Capture Button -->
-  <button class="btn btn-gradient-theme w-100 py-2 shadow-sm" id="captureBtn">
-    <span class="material-icons me-2">add_a_photo</span> Capture Progress
+  <button class="btn btn-gradient-theme capture-btn w-100 py-2 shadow-sm mt-3" id="captureBtn">
+    <i class="material-icons me-2">add_a_photo</i> Capture Progress
   </button>
- <div class="d-flex justify-content-center gap-3 mt-3 d-none" id="upgradeBtn">
-  <!-- Upgrade button -->
-  <button class="btn btn-warning btn-sm upgrade-btn" title="Upgrade for extra images">
-    <span class="material-icons me-1" style="font-size:1rem; vertical-align:middle;">upgrade</span>
-    Upgrade
-  </button>
+
+  <!-- Upgrade Button -->
+  <div class="upgrade-container mt-3 d-none" id="upgradeBtn">
+    <button class="btn upgrade-btn">
+      <i class="material-icons me-1">upgrade</i> Upgrade
+    </button>
+  </div>
 </div>
-</div>
- 
     <!-- Progress Chart -->
     <div class="card glass p-3 mb-4">
       <h6 class="ms-2 mb-3 fw-semibold">Weight Journey</h6>
       <canvas id="progressChart" style="height:240px;"></canvas>
+      <div class="card glass p-3 mb-4 text-center">
+  <h6 class="ms-2 mb-3 fw-semibold">Have you checked your weight today?</h6>
+  <div class="d-flex justify-content-center gap-3">
+    <button class="btn btn-success" id="weightYesBtn">Yes</button>
+    <button class="btn btn-danger" id="weightNoBtn">No</button>
+  </div>
+</div>
     </div>
 
 
@@ -120,56 +128,24 @@
     <p class="subtitle">Enjoy synced music vibes 🎉</p>
   </div>
 </button>
-<!-- START: Reels-Style Video Player (REPLACE your old video component) -->
-<div class="card glass p-3 mb-4">
-  <h6 class="ms-2 mb-3 fw-semibold">Your Progress Reel</h6>
-  
-  <!-- This container controls the size and shape of the player -->
-  <div id="reelsPlayerContainer" class="video-reels-container">
-      
-      <!-- The Video Element -->
-      <video 
-        id="reelsVideo"
-        class="reels-video"
-        src="https://assets.mixkit.co/videos/preview/mixkit-top-aerial-shot-of-seashore-with-rocks-1090-large.mp4" 
-        poster="https://i.imgur.com/sC5n0d1.jpeg"
-        preload="metadata"
-        playsinline
-        loop
-      ></video>
-
-      <!-- Overlay for custom controls -->
-      <div class="controls-overlay">
-          <button class="play-pause-btn">
-              <i class="material-icons play-icon">play_arrow</i>
-              <i class="material-icons pause-icon">pause</i>
-          </button>
-          
-          <div class="bottom-controls">
-              <div class="progress-bar-container">
-                  <div class="progress-bar-fill"></div>
-              </div>
-              <div class="action-buttons">
-                  <button class="mute-btn">
-                      <i class="material-icons volume-on-icon">volume_up</i>
-                      <i class="material-icons volume-off-icon">volume_off</i>
-                  </button>
-              </div>
-          </div>
-
-          <a 
-            id="reelsDownloadBtn"
-            href="https://assets.mixkit.co/videos/preview/mixkit-top-aerial-shot-of-seashore-with-rocks-1090-large.mp4" 
-            download="probody-reel.mp4" 
-            class="btn btn-sm download-button"
-          >
-            <i class="material-icons me-1">download</i>
-          </a>
-      </div>
+<button class="party-btn p-3 mb-4" id="shareBtn">
+  <span class="party-icon">
+    <i class="material-icons">share</i>
+  </span>
+  <div class="party-text">
+    <h6 class="title">Share Progress</h6>
+    <p class="subtitle">Send your journey with friends 🚀</p>
   </div>
-</div>
-<!-- END: Reels-Style Video Player -->
-
+</button>
+<button class="party-btn p-3 mb-4" id="communityBtn">
+  <span class="party-icon">
+    <i class="material-icons">group</i>
+  </span>
+  <div class="party-text">
+    <h6 class="title">Join Community</h6>
+    <p class="subtitle">Connect with other ProBody members 🌍</p>
+  </div>
+</button>
   </div>
 
   <!-- Gallery Tab -->
@@ -374,7 +350,6 @@
   </div>
 </div>
 
-
 <!-- Compare Modal -->
 <div class="modal fade" id="compareModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -426,44 +401,65 @@
 
 <!-- Video Editor Modal -->
 <div class="modal fade" id="videoEditorModal" tabindex="-1" aria-labelledby="videoEditorModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content glass p-3">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-md-down">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden bg-dark text-white">
+      
+      <!-- Header -->
       <div class="modal-header border-0">
-        <h6 class="fw-semibold mb-0">Video Editor</h6>
+        <h5 class="fw-bold mb-0">
+          <i class="text-white material-icons me-1 align-middle">movie</i> Video Editor
+        </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      
-      <div class="modal-body">
-        <!-- Toolbar -->
 
-        <!-- Preview -->
-        <div class="editor-timeline mb-3">
-          <div id="editorPreview" class="preview-box">
-            <img id="editorPreviewImg" src="https://via.placeholder.com/1280x720" alt="Preview">
-            <div class="preview-controls">
-              <span class="material-icons" id="playPauseBtn">play_arrow</span>
-              <span class="time-indicator">00:00 / 00:00</span>
-            </div>
+      <!-- Body -->
+      <div class="modal-body p-0">
+        
+        <!-- Canvas Preview Section -->
+        <div class="bg-black d-flex justify-content-center align-items-center position-relative" style="min-height:300px;">
+          <canvas id="editorPreviewCanvas" width="1280" height="720" style="max-width:100%; border-radius:8px;"></canvas>
+          
+          <!-- Overlay Controls -->
+          <div class="position-absolute bottom-0 start-0 end-0 d-flex justify-content-between align-items-center px-3 py-2" style="background:rgba(0,0,0,0.5);">
+            <span class="material-icons text-white" id="playPauseBtn">play_arrow</span>
+            <span class="time-indicator text-white small">00:00 / 00:00</span>
           </div>
+        </div>
 
-          <!-- Scenes Strip -->
-          <div class="timeline-scenes" id="timelineScenes">
-            <div class="scene"><img src="https://via.placeholder.com/100x60?text=Scene+1" alt="Scene 1"></div>
-            <div class="scene"><img src="https://via.placeholder.com/100x60?text=Scene+2" alt="Scene 2"></div>
-            <div class="scene"><img src="https://via.placeholder.com/100x60?text=Scene+3" alt="Scene 3"></div>
-            <div class="scene"><img src="https://via.placeholder.com/100x60?text=Scene+4" alt="Scene 4"></div>
-          </div>
+        <!-- Timeline Section -->
+        <div class="bg-secondary bg-opacity-25 p-3">
+          <input type="range" id="timelineSlider" class="form-range mb-3" min="0" max="100" value="0" />
+          <div class="d-flex align-items-center gap-2 overflow-auto pb-2" id="timelineScenes"></div>
+        </div>
 
-          <!-- Slider -->
-          <input type="range" id="timelineSlider" min="0" max="100" value="0" />
+        <!-- Debug Log Section -->
+        <div class="bg-dark text-white p-3 mt-2 rounded" style="max-height:120px; overflow-y:auto; font-size:0.85rem;" id="editorLog">
+          <!-- Logs will be appended here by JS -->
         </div>
       </div>
 
+      <!-- Footer -->
       <div class="modal-footer border-0">
-        <button id="exportVideoBtn" class="btn btn-success w-100">
-          <i class="material-icons" style="font-size:1rem;vertical-align:text-bottom;">download</i> Export Video
+        <button id="exportVideoBtn" class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2">
+          <i class="material-icons">download</i>
+          <span>Export Video</span>
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Weight Input Modal -->
+<div class="modal fade" id="weightInputModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass p-4 text-center">
+      <h5 class="mb-3">Enter Your Weight Today (kg)</h5>
+      <input type="range" min="40" max="150" value="70" class="form-range" id="weightInputRange">
+      <div class="mt-2 mb-3">
+        <span id="weightInputValue">70</span> kg
+      </div>
+      <button class="btn btn-gradient-theme w-100" id="saveWeightInputBtn">Save</button>
+      <button class="btn btn-outline-light w-100 mt-2" data-bs-dismiss="modal">Cancel</button>
     </div>
   </div>
 </div>
