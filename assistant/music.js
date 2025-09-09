@@ -53,6 +53,7 @@ const playPauseBtnCollapsed = document.getElementById('playPauseBtn-collapsed');
 const nextBtnCollapsed = document.getElementById('nextBtn-collapsed');
 const qrVideo = document.getElementById('qr-video');
 const qrModalEl = document.getElementById('qrScannerModal');
+const infoModal = document.getElementById('infoModal');
 
 // --- Main Application Entry Point ---
 $(function () {
@@ -107,15 +108,14 @@ async function disconnect() {
         Object.values(peers).forEach(p => { p.dc?.close(); p.pc?.close(); });
         peers = {};
 
-        // --- NEW: Clean up signaling data ---
-        if (!isHost && partyRef) {
-            // Guest removes their data
-            await partyRef.child(`guests/${deviceId}`).remove();
-            await partyRef.child(`signaling/${deviceId}`).remove(); 
+        const currentPartyRef = partyRef; // Keep a reference
+
+        if (!isHost && currentPartyRef) {
+            await currentPartyRef.child(`guests/${deviceId}`).remove();
+            await currentPartyRef.child(`signaling/${deviceId}`).remove();
         }
-        if (isHost && partyRef) {
-            // Host removes the entire party, including all signaling
-            await partyRef.remove();
+        if (isHost && currentPartyRef) {
+            await currentPartyRef.remove();
         }
         
         audio.pause();
@@ -173,7 +173,7 @@ async function startHost() {
     });
     
     libraryRef.on('value', snap => {
-        const newPlaylist = snap.exists() ? Object.values(snap.val()) : [];
+        const newPlaylist = snap.exists() ? Object.keys(snap.val()).map(key => ({ ...snap.val()[key], songId: key })) : [];
         updatePlaylist(newPlaylist);
     });
 
@@ -185,11 +185,12 @@ async function startGuest(partyId) {
     partyRef = db.ref(`parties/${partyId}`);
     currentStateRef = partyRef.child('currentState');
 
-    const partyExists = (await partyRef.once('value')).exists();
-    if (!partyExists) {
+    const partySnapshot = await partyRef.once('value');
+    if (!partySnapshot.exists()) {
         alert('Party not found!');
         return;
     }
+    const hostId = partySnapshot.val().hostId;
 
     await partyRef.child(`guests/${deviceId}`).set({ name: userData.displayName });
 
@@ -199,7 +200,17 @@ async function startGuest(partyId) {
     localStorage.setItem('lastPartyId', partyId);
     loadPartyInfo(partyId);
 
+    // --- FIX #1: Guest now listens to the host's library for playlist updates ---
+    libraryRef = db.ref(`libraries/${hostId}`);
+    libraryRef.on('value', snap => {
+        const newPlaylist = snap.exists() ? Object.keys(snap.val()).map(key => ({ ...snap.val()[key], songId: key })) : [];
+        updatePlaylist(newPlaylist);
+    });
+
+    // **RELIABILITY**: Guest's primary sync comes from Firebase
     currentStateRef.on('value', snap => handleStateSync(snap.val()));
+    
+    // **LOW LATENCY**: Establish WebRTC for pings and faster sync hints
     createPeerForHost(partyId);
 }
 
@@ -262,6 +273,10 @@ function playTrack(index, isHostAction) {
         return;
     }
 
+    if (isHostAction) {
+        partyRef.child('songsPlayed').set(firebase.database.ServerValue.increment(1));
+    }
+
     if (audio.src !== track.url) {
         audio.src = track.url;
         audio.load();
@@ -269,7 +284,6 @@ function playTrack(index, isHostAction) {
     
     if (isHostAction) {
         audio.play();
-        partyRef.child('songsPlayed').set(firebase.database.ServerValue.increment(1));
         broadcastState(true);
     }
     
@@ -342,7 +356,10 @@ function loadPartyInfo(partyId) {
     const guestListEl = $('#modal-guest-list');
     guestListEl.empty();
     if (guestCount > 0) {
-        Object.values(guests).forEach(guest => guestListEl.append(`<li><span>${guest.name || "Guest"}</span></li>`));
+        Object.entries(guests).forEach(([guestId, guest]) => {
+            const ping = guestPings[guestId] ? `<span class="text-muted">(${guestPings[guestId]}ms)</span>` : '';
+            guestListEl.append(`<li><span>${guest.name || "Guest"}</span> ${ping}</li>`);
+        });
     } else {
         guestListEl.append("<li>No guests have joined yet.</li>");
     }
@@ -350,30 +367,8 @@ function loadPartyInfo(partyId) {
     $('#party-status').text(status).removeClass('bg-success bg-danger').addClass(status === "Active" ? "bg-success" : "bg-danger");
     $('#songs-played').text(songsPlayed);
     $('#party-start-time').text(startTime);
+    $('#party-id-text').val(partyId);
   });
-}
-
-function formatTime(s) { const m = Math.floor((s||0)/60); return `${m}:${(Math.floor((s||0)%60))<10?'0':''}${Math.floor((s||0)%60)}`; }
-function getProcessedDisplayName(name) { return name ? name.split(' ')[0] : 'Guest'; }
-function logToUI(message, type = 'info') { console.log(`[${type.toUpperCase()}] ${message}`); }
-
-function updateSongTitle(title) {
-    const container = document.querySelector('.song-title-container');
-    const el = document.getElementById("footer-song-title");
-    if (!container || !el) return;
-    el.textContent = title;
-    requestAnimationFrame(() => {
-        el.classList.toggle("animate-scroll", el.scrollWidth > container.clientWidth);
-    });
-}
-
-function generateArtForSong(title) {
-    const colorPalette = [['#00c6ff', '#0072ff'], ['#ff6e7f', '#bfe9ff'], ['#f7971e', '#ffd200'], ['#8e2de2', '#4a00e0'], ['#11998e', '#38ef7d']];
-    let hash = 0;
-    for (let i = 0; i < title.length; i++) { hash = ((hash << 5) - hash) + title.charCodeAt(i); hash |= 0; }
-    const colors = colorPalette[Math.abs(hash) % colorPalette.length];
-    const initials = title.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-    return { gradient: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`, initials: initials || '?' };
 }
 
 
@@ -382,28 +377,34 @@ function generateArtForSong(title) {
 function initializeEventListeners() {
     $('#hostBtn').on('click', startHost);
     $('#joinBtn').on('click', () => { if (partyIdInput.value.trim()) startGuest(partyIdInput.value.trim()); });
-    $('#leaveBtn').on('click', disconnect);
-    $('#playPauseBtn, #playPauseBtn-collapsed').on('click', () => { if (isHost) audio.paused ? audio.play() : audio.pause(); });
-    $('#prevBtn').on('click', () => isHost && playTrack((currentTrackIndex - 1 + playlistItems.length) % playlistItems.length, true));
-    $('#nextBtn, #nextBtn-collapsed').on('click', () => isHost && playTrack((currentTrackIndex + 1) % playlistItems.length, true));
-    $('#songFileInput').on('change', e => { if (e.target.files[0]) handleFileUpload(e.target.files[0]); });
-    $('#addCustomUrlBtn').on('click', handleAddCustomUrl);
     $('#browsePartiesBtn').on('click', () => {
         new bootstrap.Modal(document.getElementById('partyListModal')).show();
         loadActivePartiesVertical();
     });
     $('#scanQrBtn').on('click', () => new bootstrap.Modal(qrModalEl).show());
 
-    // Audio element listeners
+    $('#leaveBtn').on('click', disconnect);
+    $('#fullscreenBtn').on('click', () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen());
+    $('#copyIdBtn').on('click', () => {
+        navigator.clipboard.writeText($('#party-id-text').val()).then(() => logToUI('Party ID copied!', 'success'));
+    });
+
+    $('#songFileInput').on('change', e => { if (e.target.files[0]) handleFileUpload(e.target.files[0]); });
+    $('#addCustomUrlBtn').on('click', handleAddCustomUrl);
+
+    $('#playPauseBtn, #playPauseBtn-collapsed').on('click', () => { if (isHost) audio.paused ? audio.play() : audio.pause(); });
+    $('#prevBtn').on('click', () => isHost && playTrack((currentTrackIndex - 1 + playlistItems.length) % playlistItems.length, true));
+    $('#nextBtn, #nextBtn-collapsed').on('click', () => isHost && playTrack((currentTrackIndex + 1) % playlistItems.length, true));
+
     audio.onplay = () => {
         playPauseBtn.innerHTML = '<i class="bi bi-pause-circle-fill"></i>';
         playPauseBtnCollapsed.innerHTML = '<i class="bi bi-pause-circle-fill"></i>';
-        if (isHost) broadcastState(true);
+        document.body.classList.add('is-playing');
     };
     audio.onpause = () => {
         playPauseBtn.innerHTML = '<i class="bi bi-play-circle-fill"></i>';
         playPauseBtnCollapsed.innerHTML = '<i class="bi bi-play-circle-fill"></i>';
-        if (isHost) broadcastState(true);
+        document.body.classList.remove('is-playing');
     };
     audio.onended = () => { if (isHost) nextBtn.click(); };
     audio.ontimeupdate = () => {
@@ -418,7 +419,10 @@ function initializeEventListeners() {
             broadcastState(true);
         }
     };
-    audio.onloadedmetadata = () => { durationEl.textContent = formatTime(audio.duration); };
+    audio.onloadedmetadata = () => {
+        durationEl.textContent = formatTime(audio.duration);
+    };
+    
     document.body.addEventListener('click', () => { userInteracted = true; }, { once: true });
 }
 
@@ -454,11 +458,6 @@ function handleAddCustomUrl() {
     const meta = parseSongInfo(filename);
     const songId = libraryRef.push().key;
     libraryRef.child(songId).set({ ...meta, url, songId });
-}
-
-function parseSongInfo(filename) {
-    const cleaned = filename.replace(/\.[^/.]+$/, "");
-    return cleaned.includes(' - ') ? { artist: cleaned.split(' - ')[0].trim(), title: cleaned.split(' - ').slice(1).join(' - ').trim() } : { artist: 'Unknown Artist', title: cleaned };
 }
 
 
@@ -517,7 +516,6 @@ qrModalEl.addEventListener('shown.bs.modal', () => {
         }
     }).catch(err => console.error(err));
 });
-
 qrModalEl.addEventListener('hidden.bs.modal', stopScanner);
 
 infoModal.addEventListener('show.bs.modal', () => {
@@ -535,38 +533,42 @@ infoModal.addEventListener('show.bs.modal', () => {
 
 // --- 9. WEBRTC COMMUNICATION (FOR NON-CRITICAL DATA) ---
 
-/**
- * Creates and manages a WebRTC peer connection for a new guest. (Called by the Host)
- * @param {string} guestId - The unique ID of the guest to connect to.
- * @param {object} guestInfo - Information about the guest (e.g., name).
- */
 function createPeerForGuest(guestId, guestInfo) {
     const pc = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
     
-    // The Data Channel is where messages are sent.
     const dc = pc.createDataChannel("partyData");
     peers[guestId] = { pc, dc };
 
-    // 1. When the host finds a network path (ICE candidate), send it to the guest via Firebase.
     pc.onicecandidate = event => {
         if (event.candidate) {
             partyRef.child(`signaling/${guestId}/hostCandidates`).push(event.candidate.toJSON());
         }
     };
 
-    // 2. Define what happens when the direct connection is successfully established.
+    // --- FIX #2: This is the critical "Welcome Packet" ---
     dc.onopen = () => {
         logToUI(`WebRTC connection established with ${guestInfo.name || 'guest'}!`, 'success');
-        // You can send a welcome message or initial state here if needed.
+        
+        // When a guest connects, immediately send them everything they need to sync up.
+        const fullStatePayload = {
+            type: 'fullSync',
+            payload: {
+                playlist: playlistItems,
+                trackIndex: currentTrackIndex,
+                isPaused: audio.paused,
+                seekTime: audio.currentTime,
+                timestamp: Date.now() // Use local time for immediate sync
+            }
+        };
+        dc.send(JSON.stringify(fullStatePayload));
     };
     
     dc.onclose = () => {
         logToUI(`${guestInfo.name || 'guest'} has disconnected.`, 'info');
     };
     
-    // Host listens for pings from guests to measure latency.
     dc.onmessage = event => {
         const data = JSON.parse(event.data);
         if (data.type === 'pong') {
@@ -574,52 +576,37 @@ function createPeerForGuest(guestId, guestInfo) {
         }
     };
 
-    // 3. The host now creates an "offer" to start the connection.
     pc.createOffer()
         .then(offer => pc.setLocalDescription(offer))
         .then(() => {
-            // 4. Place the offer in Firebase for the guest to find.
             const offerPayload = { sdp: pc.localDescription.sdp, type: pc.localDescription.type };
             partyRef.child(`signaling/${guestId}/offer`).set(offerPayload);
         });
 
-    // 5. The host listens for the guest's "answer".
     partyRef.child(`signaling/${guestId}/answer`).on('value', snapshot => {
         if (snapshot.exists() && !pc.currentRemoteDescription) {
             pc.setRemoteDescription(new RTCSessionDescription(snapshot.val()));
         }
     });
 
-    // 6. The host listens for ICE candidates from the guest.
     partyRef.child(`signaling/${guestId}/guestCandidates`).on('child_added', snapshot => {
         if (snapshot.exists()) {
             pc.addIceCandidate(new RTCIceCandidate(snapshot.val()));
         }
     });
 }
-
-
-/**
- * Creates a WebRTC peer connection to the host. (Called by the Guest)
- * @param {string} partyId - The ID of the party, which is the host's UID.
- */
 async function createPeerForHost(partyId) {
     const pc = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
 
-    // The guest's peer connection will be stored here for access.
-    // Note: The original file had a `peerConnection` global variable, this is where it's used.
-    let peerConnection = pc; 
-
-    // 1. When the guest finds a network path, send it to the host via Firebase.
     pc.onicecandidate = event => {
         if (event.candidate) {
             partyRef.child(`signaling/${deviceId}/guestCandidates`).push(event.candidate.toJSON());
         }
     };
 
-    // 2. The guest doesn't create a data channel; it waits to receive one from the host.
+    // The guest waits to receive the data channel from the host.
     pc.ondatachannel = event => {
         const dataChannel = event.channel;
         
@@ -633,27 +620,30 @@ async function createPeerForHost(partyId) {
             }, 3000);
         };
         
+        // --- FIX #3: Handle the incoming "Welcome Packet" ---
         dataChannel.onmessage = event => {
-            // The guest can receive messages from the host here (e.g., reactions, etc.)
+            const data = JSON.parse(event.data);
+            
+            // If it's a fullSync message, update the entire player state.
+            if (data.type === 'fullSync') {
+                updatePlaylist(data.payload.playlist);
+                handleStateSync(data.payload);
+            }
+            // You can add other message types here later (e.g., reactions)
         };
     };
 
-    // 3. The guest listens for the host's offer.
+    // The rest of the handshake logic remains the same
     partyRef.child(`signaling/${deviceId}/offer`).on('value', async (snapshot) => {
         if (snapshot.exists() && !pc.remoteDescription) {
             await pc.setRemoteDescription(new RTCSessionDescription(snapshot.val()));
-            
-            // 4. Once the offer is received, the guest creates an "answer".
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
-
-            // 5. The guest places the answer in Firebase for the host to find.
             const answerPayload = { sdp: pc.localDescription.sdp, type: pc.localDescription.type };
             await partyRef.child(`signaling/${deviceId}/answer`).set(answerPayload);
         }
     });
 
-    // 6. The guest listens for ICE candidates from the host.
     partyRef.child(`signaling/${deviceId}/hostCandidates`).on('child_added', snapshot => {
         if (snapshot.exists()) {
             pc.addIceCandidate(new RTCIceCandidate(snapshot.val()));
@@ -661,3 +651,63 @@ async function createPeerForHost(partyId) {
     });
 }
 
+
+// --- 10. UTILITIES & HELPER FUNCTIONS ---
+
+function formatTime(s) {
+    const minutes = Math.floor((s || 0) / 60);
+    const seconds = Math.floor((s || 0) % 60);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+}
+
+function getProcessedDisplayName(name) {
+    if (!name) return 'Guest';
+    return name.split(' ')[0];
+}
+
+function logToUI(message, type = 'info') {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+}
+
+function generateArtForSong(title) {
+    const colorPalette = [['#00c6ff', '#0072ff'], ['#ff6e7f', '#bfe9ff'], ['#f7971e', '#ffd200'], ['#8e2de2', '#4a00e0'], ['#11998e', '#38ef7d']];
+    let hash = 0;
+    for (let i = 0; i < title.length; i++) { hash = ((hash << 5) - hash) + title.charCodeAt(i); hash |= 0; }
+    const colors = colorPalette[Math.abs(hash) % colorPalette.length];
+    const initials = title.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    return { gradient: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`, initials: initials || '?' };
+}
+
+// --- 11. UTILITIES & HELPER FUNCTIONS ---
+
+// ... (keep the existing functions: formatTime, getProcessedDisplayName, logToUI, generateArtForSong, parseSongInfo)
+
+function parseSongInfo(filename) {
+    const cleaned = filename.replace(/\.[^/.]+$/, "");
+    if (cleaned.includes(' - ')) {
+        const parts = cleaned.split(' - ');
+        return { artist: parts[0].trim(), title: parts.slice(1).join(' - ').trim() };
+    }
+    return { artist: 'Unknown Artist', title: cleaned };
+}
+
+
+/**
+ * THIS IS THE MISSING FUNCTION
+ * Updates the song title in the footer and adds a scrolling animation if the text is too long.
+ */
+function updateSongTitle(title) {
+    const container = document.querySelector('.song-title-container');
+    const el = document.getElementById("footer-song-title");
+    
+    // Guard clause to prevent errors if elements don't exist
+    if (!container || !el) return;
+
+    el.textContent = title;
+
+    // Use requestAnimationFrame to ensure the browser has calculated the element's width
+    requestAnimationFrame(() => {
+        const isOverflowing = el.scrollWidth > container.clientWidth;
+        el.classList.toggle("animate-scroll", isOverflowing);
+    });
+}
