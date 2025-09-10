@@ -46,7 +46,7 @@ $(function () {
 
   initializeEventListeners();
   initializeNavbarScroll();
-  
+  initMpinAutoSubmit();
 
 // --- PWA Installation + Service Worker ---
 let deferredPrompt;
@@ -163,6 +163,37 @@ function getMpinValue() {
 function clearMpinInputs() {
   document.querySelectorAll(".mpin-box").forEach(input => input.value = "");
   document.querySelector(".mpin-box").focus();
+}
+
+// --- Auto MPIN Submit ---
+function initMpinAutoSubmit() {
+  const mpinInputs = document.querySelectorAll(".mpin-box");
+
+  mpinInputs.forEach((input, idx) => {
+    input.addEventListener("input", () => {
+      if (input.value && idx < mpinInputs.length - 1) {
+        mpinInputs[idx + 1].focus(); // move to next box
+      }
+
+      // check if all 4 boxes filled
+      let mpin = "";
+      let allFilled = true;
+      mpinInputs.forEach(inp => {
+        if (!inp.value) allFilled = false;
+        mpin += inp.value;
+      });
+
+      if (allFilled && /^\d{4}$/.test(mpin)) {
+        handleMpinSubmit(); // ✅ auto submit
+      }
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && !input.value && idx > 0) {
+        mpinInputs[idx - 1].focus();
+      }
+    });
+  });
 }
 
 // --- Data Loading & UI Updates ---
@@ -929,3 +960,42 @@ async function exportReel(images, fps = 1, title = "My Progress", ending = "The 
     drawNext();
   });
 }
+
+// --- Back Button Handling ---
+window.onpopstate = function () {
+  // If MPIN modal is open → hide it and show progress tab
+  const mpinModalEl = document.getElementById('mpinModal');
+  if (mpinModalEl && mpinModalEl.classList.contains('show')) {
+    bootstrap.Modal.getInstance(mpinModalEl)?.hide();
+    showTab("progressTab");
+    history.pushState(null, null, location.href);
+    return;
+  }
+
+  // If any other Bootstrap modal is open, close it
+  const openedModal = document.querySelector('.modal.show');
+  if (openedModal) {
+    bootstrap.Modal.getInstance(openedModal)?.hide();
+    history.pushState(null, null, location.href);
+    return;
+  }
+
+  // Check which tab is active
+  if (!$("#progressTab").hasClass("d-none")) {
+    // Already on progress tab → confirm exit
+    if (confirm("Do you want to exit the app?")) {
+      window.close(); // only works for PWA/standalone, ignored on normal browsers
+    } else {
+      history.pushState(null, null, location.href);
+    }
+  } else if (!$("#settingsTab").hasClass("d-none")) {
+    showTab("progressTab");
+    history.pushState(null, null, location.href);
+  } else if (!$("#galleryTab").hasClass("d-none")) {
+    showTab("progressTab");
+    history.pushState(null, null, location.href);
+  }
+};
+
+// Initialize history so back press is trapped
+history.pushState(null, null, location.href);
