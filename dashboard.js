@@ -97,6 +97,7 @@ if (isPWAInstalled()) {
 }
 
 });
+
   let mpinsubmit = false; // global flag
 
 // --- Authentication & Security ---
@@ -118,8 +119,6 @@ function checkMpinAndLoadData(uid) {
         );
         mpinModal.show();
 
-        // ✅ mark as done so it won’t trigger again this session
-        mpinsubmit = true;
       });
   }
 }
@@ -217,33 +216,68 @@ function loadUserData(uid) {
 }
 
 function updateUI(data) {
-  const { displayName = "-", weight = "-", height = "-", age = "-", photoURL = "Logo.png", uploads = 0, uploadslimit = 20 } = data;
-  
+  const {
+    displayName = "-",
+    weight = "-",
+    height = "-",
+    age = "-",
+    photoURL = "Logo.png",
+    uploads = 0,
+    uploadslimit = 20
+  } = data;
+
+  // --- Profile Info ---
   $("#progressUserImg").attr("src", photoURL);
   $("#progressUserName").text(displayName);
-  $("#progressEmail").text(auth.currentUser.email || "-");
+  $("#progressEmail").text(auth.currentUser?.email || "-");
   $("#progressWeight").text(weight);
   $("#progressHeight").text(height);
   $("#progressAge").text(age);
+
   $("#settingsName").text(displayName);
   $("#settingsWeight").text(weight ? `${weight} kg` : "-");
   $("#settingsHeight").text(height ? `${height} cm` : "-");
   $("#settingsAge").text(age);
-  
-  const progressCircle = document.getElementById("upl-progress");
-  const circumference = 2 * Math.PI * 45;
-  const offset = circumference - (uploads / uploadslimit) * circumference;
-  progressCircle.style.strokeDasharray = `${circumference}`;
-  progressCircle.style.strokeDashoffset = offset;
-  $("#upl-ratio").text(`${uploads}/${uploadslimit}`);
 
-  if (uploads >= uploadslimit) {
-    $("#captureBtn").hide();
-    $("#upgradeBtn").css("display", "inline-flex");
+  // --- Progress Circle ---
+  const circle = document.getElementById("upl-progress");
+  const ratioEl = document.getElementById("upl-ratio");
+
+  const radius = 45;
+  const circumference = 2 * Math.PI * radius;
+  const percent = Math.min(uploads / uploadslimit, 1);
+  const offset = circumference - percent * circumference;
+
+  circle.style.strokeDasharray = circumference;
+  circle.style.strokeDashoffset = offset;
+
+  // Update ratio text
+  ratioEl.textContent = `${uploads}/${uploadslimit}`;
+
+  // --- Dynamic Glow Color ---
+  let color;
+  if (percent < 0.5) {
+    color = "#00FF7F"; // Green
+  } else if (percent < 0.8) {
+    color = "#FFA500"; // Orange
   } else {
-    $("#captureBtn").css("display", "inline-flex");
-    $("#upgradeBtn").hide();
+    color = "#FF4500"; // Red
   }
+
+  circle.style.stroke = color;
+  circle.style.color = color; // used by CSS `currentColor`
+  ratioEl.style.color = color; // match text with glow color
+
+  // --- Capture vs Upgrade ---
+  if (uploads > uploadslimit) {
+  // Exceeded limit → show upgrade
+  $("#captureBtn").hide();
+  $("#upgradeBtn").removeClass("d-none").css("display", "inline-flex");
+} else {
+  // Still within limit → show capture
+  $("#captureBtn").css("display", "inline-flex");
+  $("#upgradeBtn").addClass("d-none").hide();
+}
 }
 
 // --- Event Listener Initialization ---
@@ -262,7 +296,7 @@ function initializeEventListeners() {
   $('#partyBtn').on('click', () => window.location.href = './assistant/music.html');
   $('#trainerBtn').on('click', () => window.location.href = './assistant/trainer.html');
   $('#shareBtn').on('click', async () => {
-  const siteLink = "https://your-site-link.com"; // 🔗 replace with your site URL
+  const siteLink = "https://futuremoney268-max.github.io/ProBody/dashboard.html"; // 🔗 replace with your site URL
 
   if (navigator.share) {
     try {
@@ -324,6 +358,23 @@ function initializeEventListeners() {
 });
   
 }
+
+// Open modal on Upgrade button click
+$(document).on("click", "#upgradeBtn .upgrade-btn", function () {
+  $("#upgradeModal").modal("show");
+});
+
+// Handle plan selection
+$(document).on("click", ".choose-plan", function () {
+  const plan = $(this).data("plan");
+  console.log("✅ User selected plan:", plan);
+
+  // Example: redirect to payment
+  // window.location.href = `/checkout.html?plan=${plan}`;
+
+  // Or trigger in-app purchase flow
+  alert(`You chose the ${plan} plan 🚀`);
+});
 
 // --- Profile & Settings ---
 function initProfileEditor() {

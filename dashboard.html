@@ -69,32 +69,38 @@
       </div>
     </div>
 
-<!-- Uploads Progress + Capture -->
-<div class="card glass premium-progress-card text-center mb-4">
+   <!-- Uploads Progress + Capture -->
+<div class="card glass premium-progress-card text-center mb-4 p-4 shadow-lg border-0">
   <!-- Title -->
-  <h6 class="fw-semibold mb-3 text-gradient">Your Uploads</h6>
+  <h6 class="fw-bold mb-4 text-gradient fs-5">📸 Your Uploads</h6>
 
   <!-- Circular Progress -->
-  <div class="circular-progress mx-auto">
-    <svg>
-      <circle class="circle-bg" cx="50%" cy="50%" r="45" fill="none" stroke-width="10"/>
-      <circle id="upl-progress" class="circle" cx="50%" cy="50%" r="45" fill="none" stroke-width="10"/>
+  <div class="circular-progress mx-auto position-relative mb-4">
+    <svg width="140" height="140" viewBox="0 0 100 100">
+      <defs>
+        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#8A2BE2"/>
+          <stop offset="100%" stop-color="#C73866"/>
+        </linearGradient>
+      </defs>
+      <circle class="circle-bg" cx="50" cy="50" r="45" fill="none" stroke-width="10"/>
+      <circle id="upl-progress" class="circle glow" cx="50" cy="50" r="45" fill="none" stroke-width="10"/>
     </svg>
-    <div id="upl-ratio" class="progress-text">0/20</div>
+    <div id="upl-ratio" class="progress-text fw-bold">0/20</div>
   </div>
 
   <!-- Capture Button -->
-  <button class="btn btn-gradient-theme capture-btn w-100 py-2 shadow-sm mt-3" id="captureBtn">
-    <i class="material-icons me-2">add_a_photo</i> Capture Progress
+  <button class="btn btn-gradient-theme capture-btn w-100 py-3 fw-semibold shadow-sm rounded-pill" id="captureBtn">
+    <i class="material-icons me-2 align-middle">add_a_photo</i> Capture Progress
   </button>
-
   <!-- Upgrade Button -->
-  <div class="upgrade-container mt-3 d-none" id="upgradeBtn">
-    <button class="btn upgrade-btn">
-      <i class="material-icons me-1">upgrade</i> Upgrade
-    </button>
-  </div>
+<div class="upgrade-container mt-3 d-none" id="upgradeBtn">
+  <button class="btn upgrade-btn">
+    <i class="material-icons me-1">upgrade</i> Upgrade
+  </button>
 </div>
+</div>
+
     <!-- Progress Chart -->
     <div class="card glass p-3 mb-4">
       <h6 class="ms-2 mb-3 fw-semibold">Weight Journey</h6>
@@ -245,15 +251,33 @@
   </div>
 </div>
     
-    <!-- Change MPIN Section -->
-    <div class="card glass p-4 mb-4">
-      <h6 class="mb-3 fw-semibold">Change MPIN</h6>
-      <input type="password" id="newMpin" class="form-control mb-3" placeholder="Enter new 4-6 digit MPIN" pattern="[0-9]*" minlength="4" maxlength="6" inputmode="numeric">
-      <input type="password" id="confirmNewMpin" class="form-control mb-3" placeholder="Confirm new MPIN" pattern="[0-9]*" minlength="4" maxlength="6" inputmode="numeric">
-      <button class="btn btn-gradient-theme w-100 py-2" id="saveMpinBtn">
-        <i class="material-icons me-2">lock</i> Save MPIN
-      </button>
-    </div>
+<!-- Change MPIN Section -->
+<div class="card glass p-4 mb-4">
+  <h6 class="mb-3 fw-semibold">Change MPIN</h6>
+  <input 
+    type="password" 
+    id="newMpin" 
+    class="form-control mb-3" 
+    placeholder="Enter new 4-digit MPIN" 
+    pattern="\d{4}" 
+    minlength="4" 
+    maxlength="4" 
+    inputmode="numeric">
+    
+  <input 
+    type="password" 
+    id="confirmNewMpin" 
+    class="form-control mb-3" 
+    placeholder="Confirm new MPIN" 
+    pattern="\d{4}" 
+    minlength="4" 
+    maxlength="4" 
+    inputmode="numeric">
+    
+  <button class="btn btn-gradient-theme w-100 py-2" id="saveMpinBtn">
+    <i class="material-icons me-2">lock</i> Save MPIN
+  </button>
+</div>
 
     <!-- Logout -->
     <div class="card glass p-2">
@@ -460,6 +484,53 @@
       </div>
       <button class="btn btn-gradient-theme w-100" id="saveWeightInputBtn">Save</button>
       <button class="btn btn-outline-light w-100 mt-2" data-bs-dismiss="modal">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upgrade Modal -->
+<div class="modal fade" id="upgradeModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content glass text-center p-4">
+      
+      <div class="modal-header border-0">
+        <h4 class="fw-bold text-gradient m-0">Upgrade to ProBody Premium</h4>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="text-white-50 mb-4">
+          Unlock unlimited uploads, advanced progress tracking, and priority support 🚀
+        </p>
+
+        <!-- Pricing Plans -->
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card glass p-3 h-100 plan-card shadow-sm">
+              <h5 class="fw-bold">Monthly</h5>
+              <p class="text-white-50 small">Billed every month</p>
+              <h3 class="fw-bold mb-3">Rs 20</h3>
+              <button class="btn btn-gradient-theme w-100 choose-plan" data-plan="monthly">
+                Choose Monthly
+              </button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card glass p-3 h-100 plan-card shadow-sm border border-gradient">
+              <h5 class="fw-bold">Yearly</h5>
+              <p class="text-white-50 small">Save 40% (Best Value)</p>
+              <h3 class="fw-bold mb-3">Rs 100</h3>
+              <button class="btn btn-gradient-theme w-100 choose-plan" data-plan="yearly">
+                Choose Yearly
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer border-0 justify-content-center">
+        <button class="btn btn-outline-light" data-bs-dismiss="modal">Maybe Later</button>
+      </div>
     </div>
   </div>
 </div>

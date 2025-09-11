@@ -30,6 +30,61 @@
       margin: 0; padding: 0 0 calc(120px + env(safe-area-inset-bottom)); overflow-x: hidden;
       -webkit-tap-highlight-color: transparent;
     }
+    
+    .vertical-slider {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: rotate(270deg) translateY(-50%);
+  transform-origin: right center;
+  width: 150px; /* slider length */
+  appearance: none;
+  background: transparent;
+  z-index: 150;
+}
+    .undo-btn {
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  background: rgba(255,255,255,0.1);
+  border: var(--glass-border);
+  color: var(--text-color);
+  transition: all 0.2s ease;
+}
+.undo-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* Track */
+.vertical-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+.vertical-slider::-moz-range-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+/* Thumb */
+.vertical-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  cursor: pointer;
+  margin-top: -6px;
+}
+.vertical-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  cursor: pointer;
+}
     /* --- TOP BAR & CONTROLS --- */
     .top-bar { display: flex; justify-content: space-between; align-items: center; background: rgba(18,18,18,0.7); backdrop-filter: var(--glass-blur); padding: 1rem 1.5rem; border-bottom: var(--glass-border); position: sticky; top: 0; z-index: 200; }
     .top-bar .page-title { font-size: 1.5rem; font-weight: 700; margin: 0; }
@@ -83,7 +138,111 @@
     .notification { background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: 1rem; margin-bottom: 1rem; border: var(--glass-border); border-left-width: 4px; animation: fadeIn 0.5s ease; }
     .notification.success { border-left-color: #28a745; }
     .notification.error { border-left-color: var(--accent-secondary); }
-    
+    /* Premium Glass Button */
+.glass-btn {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  color: var(--text-color);
+  padding: 0.75rem 2rem;
+  border-radius: 50px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+.glass-btn:hover {
+  background: rgba(255,255,255,0.15);
+  transform: translateY(-2px);
+}
+
+/* Premium Dropdown Menu */
+.glass-menu {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: 1rem;
+  padding: 0.5rem;
+}
+.glass-menu .dropdown-item {
+  border-radius: 0.75rem;
+  color: var(--text-color);
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+}
+.glass-menu .dropdown-item:hover {
+  background: var(--accent-gradient);
+  color: #fff;
+}
+
+/* Overlay Slider Container */
+.overlay-slider-container {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 200;
+}
+
+/* Vertical Slider */
+.vertical-slider {
+  transform: rotate(270deg);
+  width: 160px;
+  appearance: none;
+  background: transparent;
+  opacity: 0.85;
+  transition: opacity 0.3s ease;
+}
+.vertical-slider:hover { opacity: 1; }
+
+/* Track */
+.vertical-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+.vertical-slider::-moz-range-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+/* Thumb */
+.vertical-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  cursor: pointer;
+  margin-top: -7px;
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+}
+.vertical-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+}
+
+/* Floating Label */
+.overlay-label {
+  display: none;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-color);
+  box-shadow: var(--shadow);
+}
+
     @keyframes pulse-capture { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     @keyframes pulse-countdown { 0% { opacity: 1; } 50% { opacity: 0.9; } 100% { opacity: 1; } }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -104,18 +263,31 @@
       <input type="file" id="photoInput" accept="image/*" class="d-none">
     </div>
   </div>
-
   <!-- Camera & Controls -->
-  <div id="cameraContainer"><video id="video" autoplay playsinline></video><img id="overlay" alt="Onion skin overlay"/></div>
   <canvas id="canvas" class="d-none"></canvas>
-  <div class="dropdown">
-    <button class="btn dropdown-toggle" type="button" id="tagMenu" data-bs-toggle="dropdown"><i data-lucide="tag"></i> Front</button>
-    <ul class="dropdown-menu">
-      <li><a class="dropdown-item" href="#" onclick="setTag('Front')">Front</a></li>
-      <li><a class="dropdown-item" href="#" onclick="setTag('Back')">Back</a></li>
-      <li><a class="dropdown-item" href="#" onclick="setTag('Side')">Side</a></li>
-    </ul>
+<!-- Camera & Controls with Overlay Slider -->
+<div id="cameraContainer">
+  <video id="video" autoplay playsinline></video>
+  <img id="overlay" alt="Onion skin overlay"/>
+
+  <!-- Vertical Overlay Slider + Label -->
+  <div class="overlay-slider-container">
+    <input type="range" id="overlaySlider" min="0" max="100" value="30" class="vertical-slider">
+    <span id="overlayValue" class="overlay-label">30%</span>
   </div>
+</div>
+
+<!-- Tag Dropdown -->
+<div class="dropdown mt-3 text-center">
+  <button class="btn glass-btn dropdown-toggle" type="button" id="tagMenu" data-bs-toggle="dropdown">
+    <i data-lucide="tag"></i> Front
+  </button>
+  <ul class="dropdown-menu glass-menu text-center">
+    <li><a class="dropdown-item" href="#" onclick="setTag('Front')">Front</a></li>
+    <li><a class="dropdown-item" href="#" onclick="setTag('Back')">Back</a></li>
+    <li><a class="dropdown-item" href="#" onclick="setTag('Side')">Side</a></li>
+  </ul>
+</div>
   <div class="control-bar">
     <button class="btn btn-light" onclick="toggleCamera()" title="Switch Camera"><i data-lucide="refresh-ccw"></i></button>
     <button class="btn btn-danger" onclick="takePhoto()" title="Capture"><i data-lucide="camera"></i></button>
@@ -164,6 +336,7 @@
       </div>
       <div class="notification-list" id="notificationList"></div>
   </div>
+  
 
   <!-- SCRIPTS -->
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -190,9 +363,9 @@
     const db = firebase.database();
     const storage = firebase.storage();
     const demoOverlays = {
-        Front: "front.png",
-        Back: "back.png",
-        Side: "1side.png"
+        Front: "./front.png",
+        Back: "./back.png",
+        Side: "./1side.png"
     };
     // --- Global & State Variables ---
     let currentUser = null;
@@ -204,6 +377,7 @@
     let timerIndex = 0;
     let notificationCount = 0;
     let confirmationModal = null;
+    const activeUploads = new Set();
 
     // --- Main Initializer ---
     $(document).ready(() => {
@@ -229,81 +403,126 @@
 
     // --- UNIFIED UPLOAD FLOW ---
     function handleConfirmUpload() {
-        const date = $('#photoDate').val();
-        const tag = $('#photoTag').val();
+  const date = $('#photoDate').val();
+  const tag = $('#photoTag').val();
 
-        if (!capturedBlobSource || !date || !tag) {
-            return addNotification({ title: "Missing Info", description: "Please ensure a date and tag are selected." }, "error");
-        }
+  if (!capturedBlobSource || !date || !tag) {
+    return addNotification(
+      { title: "Missing Info", description: "Please ensure a date and tag are selected." },
+      "error"
+    );
+  }
 
-        const blob = (typeof capturedBlobSource === 'string') ? dataURLtoBlob(capturedBlobSource) : capturedBlobSource;
-        
-        const ui = {
-            footer: $("#uploadConfirmationModal .modal-footer"),
-            progressContainer: $("#uploadProgressContainer"),
-            progressBar: $("#uploadProgressBar")
-        };
+  const blob = (typeof capturedBlobSource === "string")
+    ? dataURLtoBlob(capturedBlobSource)
+    : capturedBlobSource;
 
-        ui.footer.find("button").prop("disabled", true);
-        ui.progressBar.removeClass('bg-danger bg-success').css("width", "0%").text("0%");
-        ui.progressContainer.removeClass("d-none");
-        
-        uploadFileToFirebase({
-            blob: blob,
-            tag: tag,
-            dateString: date,
-            onProgress: (progress) => {
-                ui.progressBar.css("width", `${progress}%`).text(`${Math.floor(progress)}%`);
-            },
-            onSuccess: (downloadURL) => {
-                ui.progressBar.addClass('bg-success').text('Success!');
-                setTimeout(() => {
-                    confirmationModal.hide();
-                    ui.footer.find("button").prop("disabled", false);
-                    ui.progressContainer.addClass("d-none");
-                }, 1000);
+  // Close modal immediately so user can capture again
+  confirmationModal.hide();
 
-                // Update onion skin with the new photo
-                localStorage.setItem(`lastPhotoURL_${tag}`, downloadURL);
-                if ($("#tagMenu").text().trim() === tag) {
-                    $("#overlay").attr("src", downloadURL);
-                }
-                addNotification({ title: "Success!", description: `${tag} photo saved.` }, "success");
-            },
-            onError: (error) => {
-                ui.progressBar.addClass('bg-danger').text('Upload Failed');
-                addNotification({ title: "Upload Failed", description: error.message }, "error");
-                 setTimeout(() => {
-                    ui.footer.find("button").prop("disabled", false);
-                    ui.progressContainer.addClass("d-none");
-                }, 2000);
-            }
-        });
+  // Create upload notification with progress bar + pause/resume button
+  const notifId = `upload-${Date.now()}`;
+  const notifHTML = `
+    <div class="notification uploading" id="${notifId}">
+      <strong>Uploading ${tag}</strong>
+      <div class="progress mt-2">
+        <div class="progress-bar" style="width:0%">0%</div>
+      </div>
+      <button class="btn btn-sm btn-outline-light mt-2 pause-btn">Pause</button>
+    </div>`;
+  $("#notificationList").prepend(notifHTML);
+  $("#notificationBar").addClass("active");
+
+  const notifEl = $(`#${notifId}`);
+  const progressBar = notifEl.find(".progress-bar");
+  const pauseBtn = notifEl.find(".pause-btn");
+
+  // Register active upload
+  activeUploads.add(notifId);
+  updateNotificationBadge();
+
+  // Start upload (store task so we can pause/resume)
+  const uploadTask = uploadFileToFirebase({
+    blob,
+    tag,
+    dateString: date,
+    onProgress: (progress) => {
+      progressBar.css("width", `${progress}%`).text(`${Math.floor(progress)}%`);
+    },
+    onSuccess: (downloadURL) => {
+      progressBar.addClass("bg-success").text("Done");
+      notifEl.removeClass("uploading").addClass("success");
+      pauseBtn.remove();
+
+      activeUploads.delete(notifId);
+      updateNotificationBadge();
+
+      // Collapse into compact status
+      setTimeout(() => {
+        notifEl.html(`<strong>✅ ${tag}</strong><p>Upload complete</p>`);
+      }, 1000);
+
+      // Update overlay
+      localStorage.setItem(`lastPhotoURL_${tag}`, downloadURL);
+      if ($("#tagMenu").text().trim() === tag) {
+        $("#overlay").attr("src", downloadURL);
+      }
+    },
+    onError: (error) => {
+      progressBar.addClass("bg-danger").text("Failed");
+      notifEl.removeClass("uploading").addClass("error");
+      pauseBtn.remove();
+
+      activeUploads.delete(notifId);
+      updateNotificationBadge();
+
+      // Collapse into compact error message
+      setTimeout(() => {
+        notifEl.html(`<strong>❌ ${tag}</strong><p>${error.message}</p>`);
+      }, 1500);
     }
+  });
 
-    function uploadFileToFirebase({ blob, tag, dateString, onProgress, onSuccess, onError }) {
-        if (!currentUser) return onError(new Error("User not authenticated."));
-
-        const filename = `${tag.toLowerCase()}-${Date.now()}.png`;
-        const storageRef = storage.ref(`photos/${currentUser.uid}/${dateString}/${filename}`);
-        const uploadTask = storageRef.put(blob);
-
-        uploadTask.on("state_changed",
-            (snapshot) => onProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100),
-            (error) => onError(error),
-            async () => {
-                try {
-                    const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                    const dbRef = db.ref(`users/${currentUser.uid}/gallery/${dateString}`);
-                    await dbRef.update({ [tag.toLowerCase()]: downloadURL });
-                    await db.ref(`users/${currentUser.uid}/uploads`).transaction(c => (c || 0) + 1);
-                    onSuccess(downloadURL);
-                } catch (dbError) {
-                    onError(dbError);
-                }
-            }
-        );
+  // Pause/Resume button logic
+  pauseBtn.on("click", () => {
+    if (uploadTask.snapshot.state === "running") {
+      uploadTask.pause();
+      pauseBtn.text("Resume");
+    } else if (uploadTask.snapshot.state === "paused") {
+      uploadTask.resume();
+      pauseBtn.text("Pause");
     }
+  });
+}
+
+function uploadFileToFirebase({ blob, tag, dateString, onProgress, onSuccess, onError }) {
+  if (!currentUser) {
+    onError(new Error("User not authenticated."));
+    return;
+  }
+
+  const filename = `${tag.toLowerCase()}-${Date.now()}.png`;
+  const storageRef = storage.ref(`photos/${currentUser.uid}/${dateString}/${filename}`);
+  const uploadTask = storageRef.put(blob);
+
+  uploadTask.on("state_changed",
+    (snapshot) => onProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100),
+    (error) => onError(error),
+    async () => {
+      try {
+        const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+        const dbRef = db.ref(`users/${currentUser.uid}/gallery/${dateString}`);
+        await dbRef.update({ [tag.toLowerCase()]: downloadURL });
+        await db.ref(`users/${currentUser.uid}/uploads`).transaction(c => (c || 0) + 1);
+        onSuccess(downloadURL);
+      } catch (dbError) {
+        onError(dbError);
+      }
+    }
+  );
+
+  return uploadTask; // <-- important
+}
 
     // --- Camera & Import Triggers ---
     function captureNow() {
@@ -364,7 +583,7 @@
         } else { captureNow(); }
     }
     
-function setTag(tag) {
+    function setTag(tag) {
     $("#tagMenu").html(`<i data-lucide="tag"></i> ${tag}`);
     lucide.createIcons();
 
@@ -412,6 +631,40 @@ function setTag(tag) {
         $("#notificationList").prepend(notificationHTML);
         setTimeout(() => $(`#${notificationId}`).fadeOut(500, function() { $(this).remove(); }), 5000);
     }
+    
+ let overlayLabelTimeout;
+
+$("#overlaySlider").on("input", function () {
+  const val = $(this).val();
+  $("#overlay").css("opacity", val / 100);
+  $("#overlayValue").text(val + "%").fadeIn(200);
+
+  // Reset auto-hide timer
+  clearTimeout(overlayLabelTimeout);
+  overlayLabelTimeout = setTimeout(() => {
+    $("#overlayValue").fadeOut(400);
+  }, 2000);
+});
+
+window.addEventListener("popstate", (e) => {
+  if (activeUploads.size > 0) {
+    e.preventDefault();
+    alert("Uploads are in progress. Please wait until they finish.");
+    history.pushState(null, null, location.href); // prevent leaving
+  }
+});
+
+function updateNotificationBadge() {
+  const badge = $("#notificationBadge");
+  const count = activeUploads.size;
+
+  if (count > 0) {
+    badge.text(count).show();
+  } else {
+    badge.hide();
+  }
+}
+ 
   </script>
 </body>
 </html>
