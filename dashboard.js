@@ -98,7 +98,7 @@ if (isPWAInstalled()) {
 
 });
 
-  let mpinsubmit = false; // global flag
+let mpinsubmit = false; // global flag
 
 // --- Authentication & Security ---
 function checkMpinAndLoadData(uid) {
@@ -203,11 +203,24 @@ function loadUserData(uid) {
       loader.classList.add("d-none");
       if (snapshot.exists()) {
         const data = snapshot.val();
-        updateUI(data);
+
+        // Set upload limit depending on premium flag
+        const limit = data.premium ? 100 : 20;
+
+        // Pass limit into updateUI
+        updateUI({
+          ...data,
+          uploadslimit: limit
+        });
+        // --- ALSO set Settings card ---
+        $("#settingsName").text(data.displayName || "-");
+        $("#settingsWeight").text(data.weight ? `${data.weight} kg` : "-");
+        $("#settingsHeight").text(data.height ? `${data.height} cm` : "-");
+        $("#settingsAge").text(data.age || "-");
+
         dashboard.style.display = "block";
         showTab("progressTab");
         initProgressChart();
-        //loadUserImages(uid);
         initProfileEditor();
       } else {
         alert("Could not find your user profile.");
@@ -223,21 +236,37 @@ function updateUI(data) {
     age = "-",
     photoURL = "Logo.png",
     uploads = 0,
-    uploadslimit = 20
+    premium = false,
+    uploadslimit = premium ? Infinity : 20
   } = data;
 
   // --- Profile Info ---
   $("#progressUserImg").attr("src", photoURL);
   $("#progressUserName").text(displayName);
   $("#progressEmail").text(auth.currentUser?.email || "-");
-  $("#progressWeight").text(weight);
-  $("#progressHeight").text(height);
-  $("#progressAge").text(age);
 
-  $("#settingsName").text(displayName);
-  $("#settingsWeight").text(weight ? `${weight} kg` : "-");
-  $("#settingsHeight").text(height ? `${height} cm` : "-");
-  $("#settingsAge").text(age);
+  // --- Animate Stats ---
+  $("#progressWeight").attr("data-value", weight).text("0");
+  $("#progressHeight").attr("data-value", height).text("0");
+  $("#progressAge").attr("data-value", age).text("0");
+
+  animateCounters();
+
+  // --- Premium Ring ---
+  if (premium) {
+    $("#progressUserImg").addClass("premium-border");
+    $("#premiumRing").removeClass("d-none");
+
+    $("#progressUserImg, #premiumRing")
+      .off("click")
+      .on("click", () => {
+        const modal = new bootstrap.Modal(document.getElementById("premiumModal"));
+        modal.show();
+      });
+  } else {
+    $("#progressUserImg").removeClass("premium-border");
+    $("#premiumRing").addClass("d-none");
+  }
 
   // --- Progress Circle ---
   const circle = document.getElementById("upl-progress");
@@ -245,41 +274,61 @@ function updateUI(data) {
 
   const radius = 45;
   const circumference = 2 * Math.PI * radius;
-  const percent = Math.min(uploads / uploadslimit, 1);
+
+  const percent = premium ? 0 : Math.min(uploads / uploadslimit, 1);
   const offset = circumference - percent * circumference;
 
   circle.style.strokeDasharray = circumference;
   circle.style.strokeDashoffset = offset;
 
-  // Update ratio text
-  ratioEl.textContent = `${uploads}/${uploadslimit}`;
+  ratioEl.textContent = premium ? `${uploads}/∞` : `${uploads}/${uploadslimit}`;
 
-  // --- Dynamic Glow Color ---
   let color;
-  if (percent < 0.5) {
-    color = "#00FF7F"; // Green
+  if (premium) {
+    color = "#FFD700"; // gold glow for premium
+  } else if (percent < 0.5) {
+    color = "#00FF7F"; // green
   } else if (percent < 0.8) {
-    color = "#FFA500"; // Orange
+    color = "#FFA500"; // orange
   } else {
-    color = "#FF4500"; // Red
+    color = "#FF4500"; // red
   }
 
   circle.style.stroke = color;
-  circle.style.color = color; // used by CSS `currentColor`
-  ratioEl.style.color = color; // match text with glow color
+  circle.style.color = color;
+  ratioEl.style.color = color;
 
   // --- Capture vs Upgrade ---
-  if (uploads > uploadslimit) {
-  // Exceeded limit → show upgrade
-  $("#captureBtn").hide();
-  $("#upgradeBtn").removeClass("d-none").css("display", "inline-flex");
-} else {
-  // Still within limit → show capture
-  $("#captureBtn").css("display", "inline-flex");
-  $("#upgradeBtn").addClass("d-none").hide();
-}
+  if (premium) {
+    $("#captureBtn").css("display", "inline-flex");
+    $("#upgradeBtn").addClass("d-none").hide();
+  } else if (uploads > uploadslimit) {
+    $("#captureBtn").hide();
+    $("#upgradeBtn").removeClass("d-none").css("display", "inline-flex");
+  } else {
+    $("#captureBtn").css("display", "inline-flex");
+    $("#upgradeBtn").addClass("d-none").hide();
+  }
 }
 
+function animateCounters() {
+  document.querySelectorAll(".stat-value span").forEach(el => {
+    const target = +el.dataset.value || +el.textContent;
+    let start = 0;
+    const duration = 1200; 
+    const stepTime = 16;
+    const step = Math.max(1, target / (duration / stepTime));
+
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= target) {
+        start = target;
+        clearInterval(timer);
+      }
+      el.textContent = Math.floor(start);
+    }, stepTime);
+  });
+}
 // --- Event Listener Initialization ---
 function initializeEventListeners() {
   document.querySelectorAll(".mpin-box").forEach((box, idx, arr) => {
@@ -378,7 +427,11 @@ $(document).on("click", ".choose-plan", function () {
 
 // --- Profile & Settings ---
 function initProfileEditor() {
-  $("#editBtnContainer").html('<button id="editBtn" class="btn btn-primary btn-sm"><i class="material-icons">edit</i> Edit</button>');
+  $("#editBtnContainer").html(`
+    <button id="editBtn" class="btn btn-primary btn-sm">
+      <i class="material-icons">edit</i> Edit
+    </button>
+  `);
   $("#editBtn").on("click", makeProfileEditable);
 }
 
@@ -389,15 +442,22 @@ function makeProfileEditable() {
     height: $("#settingsHeight").text(),
     age: $("#settingsAge").text()
   };
+
   $("#settingsName").html(`<input id="edit-name" type="text" class="form-control form-control-sm text-end" value="${original.name}">`);
   $("#settingsWeight").html(`<input id="edit-weight" type="number" class="form-control form-control-sm text-end" value="${parseInt(original.weight) || ''}">`);
   $("#settingsHeight").html(`<input id="edit-height" type="number" class="form-control form-control-sm text-end" value="${parseInt(original.height) || ''}">`);
   $("#settingsAge").html(`<input id="edit-age" type="number" class="form-control form-control-sm text-end" value="${parseInt(original.age) || ''}">`);
+
   $("#editBtnContainer").html(`
-    <button id="saveBtn" class="btn btn-success btn-sm me-2"><i class="material-icons">check</i> Save</button>
-    <button id="cancelBtn" class="btn btn-secondary btn-sm"><i class="material-icons">close</i> Cancel</button>
+    <button id="saveBtn" class="btn btn-success btn-sm me-2">
+      <i class="material-icons">check</i> Save
+    </button>
+    <button id="cancelBtn" class="btn btn-secondary btn-sm">
+      <i class="material-icons">close</i> Cancel
+    </button>
   `);
-  $("#saveBtn").on("click", () => saveProfileChanges());
+
+  $("#saveBtn").on("click", saveProfileChanges);
   $("#cancelBtn").on("click", () => {
     $("#settingsName").text(original.name);
     $("#settingsWeight").text(original.weight);
@@ -409,10 +469,7 @@ function makeProfileEditable() {
 
 function getLocalDateKey() {
   const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
 function saveProfileChanges() {
@@ -427,14 +484,15 @@ function saveProfileChanges() {
   const userRef = db.ref(`users/${uid}`);
 
   userRef.update(updates).then(() => {
-    const today = getLocalDateKey(); // <-- Local date (YYYY-MM-DD)
+    const today = getLocalDateKey();
 
     userRef.child("progressLogs").child(today).update({
       weight: updates.weight,
       updatedAt: Date.now()
     });
 
-    updateUI(updates);
+    // ✅ Reload everything fresh from DB (instead of partial updateUI)
+    loadUserData(uid);
     initProfileEditor();
   });
 }
@@ -459,20 +517,21 @@ $("#saveWeightInputBtn").on("click", () => {
   if (!user) return;
 
   const selectedWeight = parseInt($("#weightInputRange").val()) || 70;
-  const todayKey = getLocalDateKey(); // YYYY-MM-DD
+  const todayKey = getLocalDateKey();
+
   const updates = {};
+  updates[`users/${user.uid}/weight`] = selectedWeight; // ✅ update profile weight
   updates[`users/${user.uid}/settings/weightCheckedToday`] = true;
   updates[`users/${user.uid}/progressLogs/${todayKey}`] = {
     weight: selectedWeight,
     updatedAt: Date.now()
   };
 
-  firebase.database().ref().update(updates)
-    .then(() => {
-      $("#progressWeight").text(selectedWeight); // Update UI
-      const modalInstance = bootstrap.Modal.getInstance(document.getElementById("weightInputModal"));
-      modalInstance.hide();
-    });
+  firebase.database().ref().update(updates).then(() => {
+    loadUserData(user.uid); // ✅ refresh UI fully
+    const modalInstance = bootstrap.Modal.getInstance(document.getElementById("weightInputModal"));
+    modalInstance.hide();
+  });
 });
 
 // NO button: save current displayed weight without popup
@@ -481,14 +540,18 @@ $("#weightNoBtn").on("click", () => {
   if (!user) return;
 
   const currentWeight = parseInt($("#progressWeight").text()) || 0;
-  const todayKey = getLocalDateKey(); // YYYY-MM-DD
+  const todayKey = getLocalDateKey();
 
-  db.ref(`users/${user.uid}/progressLogs/${todayKey}`).update({
+  const updates = {};
+  updates[`users/${user.uid}/weight`] = currentWeight; // ✅ update profile weight
+  updates[`users/${user.uid}/settings/weightCheckedToday`] = false;
+  updates[`users/${user.uid}/progressLogs/${todayKey}`] = {
     weight: currentWeight,
     updatedAt: Date.now()
-  }).then(() => {
-    // mark as NOT manually checked
-    db.ref(`users/${user.uid}/settings`).update({ weightCheckedToday: false });
+  };
+
+  firebase.database().ref().update(updates).then(() => {
+    loadUserData(user.uid); // ✅ refresh UI fully
   });
 });
 
@@ -1050,3 +1113,4 @@ window.onpopstate = function () {
 
 // Initialize history so back press is trapped
 history.pushState(null, null, location.href);
+

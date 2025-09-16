@@ -31,45 +31,51 @@
   <!-- Progress Tab -->
   <div id="progressTab" class="tab-content">
     
-    <!-- User Profile Card -->
-    <div class="card glass user-profile-card mb-4">
-      <div class="row g-3 align-items-center">
-        <div class="col-md-5 text-center text-md-start">
-          <img id="progressUserImg" src="Logo.png" class="user-avatar rounded-circle mb-3 mb-md-0">
-          <div>
-            <h5 id="progressUserName" class="text-white fw-bold mb-0">John Doe</h5>
-            <small class="text-white-50" id="progressEmail">john@example.com</small>
+  <!-- User Profile Card -->
+<div class="card glass user-profile-card mb-4">
+  <div class="row g-3 align-items-center">
+    <!-- Left: Avatar + Info -->
+    <div class="col-md-5 text-center text-md-start">
+      <div class="avatar-wrapper position-relative d-inline-block">
+  <img id="progressUserImg" src="Logo.png" class="user-avatar">
+  <span id="premiumRing" class="premium-ring d-none"></span>
+</div>
+      <div>
+        <h5 id="progressUserName" class="text-white fw-bold mb-0">John Doe</h5>
+        <small class="text-white-50" id="progressEmail">john@example.com</small>
+      </div>
+    </div>
+
+    <!-- Right: Stats -->
+    <div class="col-md-7">
+      <div class="row g-2 text-center">
+        <div class="col-4">
+          <div class="stat-item p-2 rounded">
+            <i class="material-icons text-gradient mb-1">scale</i>
+            <div class="stat-value"><span id="progressWeight">70</span> kg</div>
+            <small class="text-white-50">Weight</small>
           </div>
         </div>
-        <div class="col-md-7">
-          <div class="row g-2 text-center">
-            <div class="col-4">
-              <div class="stat-item p-2 rounded">
-                <i class="material-icons text-gradient mb-1">scale</i>
-                <div class="stat-value"><span id="progressWeight">70</span> kg</div>
-                <small class="text-white-50">Weight</small>
-              </div>
-            </div>
-            <div class="col-4">
-              <div class="stat-item p-2 rounded">
-                <i class="material-icons text-gradient mb-1">height</i>
-                <div class="stat-value"><span id="progressHeight">170</span> cm</div>
-                <small class="text-white-50">Height</small>
-              </div>
-            </div>
-            <div class="col-4">
-              <div class="stat-item p-2 rounded">
-                <i class="material-icons text-gradient mb-1">cake</i>
-                <div class="stat-value"><span id="progressAge">30</span></div>
-                <small class="text-white-50">Age</small>
-              </div>
-            </div>
+        <div class="col-4">
+          <div class="stat-item p-2 rounded">
+            <i class="material-icons text-gradient mb-1">height</i>
+            <div class="stat-value"><span id="progressHeight">170</span> cm</div>
+            <small class="text-white-50">Height</small>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="stat-item p-2 rounded">
+            <i class="material-icons text-gradient mb-1">cake</i>
+            <div class="stat-value"><span id="progressAge">30</span></div>
+            <small class="text-white-50">Age</small>
           </div>
         </div>
       </div>
     </div>
+  </div>
+</div>
 
-   <!-- Uploads Progress + Capture -->
+  <!-- Uploads Progress + Capture -->
 <div class="card glass premium-progress-card text-center mb-4 p-4 shadow-lg border-0">
   <!-- Title -->
   <h6 class="fw-bold mb-4 text-gradient fs-5">📸 Your Uploads</h6>
@@ -530,6 +536,28 @@
 
       <div class="modal-footer border-0 justify-content-center">
         <button class="btn btn-outline-light" data-bs-dismiss="modal">Maybe Later</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Premium Features Modal -->
+<div class="modal fade" id="premiumModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass text-center p-4">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold text-gradient">
+          🌟 Premium Features
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-unstyled text-start">
+          <li>✅ Unlimited uploads</li>
+          <li>✅ Gold profile border</li>
+          <li>✅ Premium badge</li>
+          <li>✅ Priority sync & faster speed</li>
+        </ul>
+        <p class="text-white-50 small mt-3">Enjoy your exclusive benefits 🎉</p>
       </div>
     </div>
   </div>
